@@ -47,12 +47,11 @@ class Chunk(Base):
     # Relationships
     document = relationship("Document", back_populates="chunks")
     
-    # Indexes for better performance (ivfflat index can be added later with pgvector)
+    # Indexes for better performance
     __table_args__ = (
         Index("idx_chunks_document_id", "document_id"),
-        # Note: ivfflat index requires pgvector extension
-        # Create manually if pgvector is available:
-        # CREATE INDEX idx_chunks_embedding ON chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+        Index("idx_chunks_embedding", "embedding", postgresql_using="ivfflat", 
+              postgresql_with={"lists": 100}, postgresql_ops={"embedding": "vector_cosine_ops"}),
     )
     
     def __repr__(self) -> str:
