@@ -81,6 +81,12 @@ async def root():
     }
 
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Railway."""
+    return {"status": "healthy"}
+
+
 @app.get("/ready")
 async def readiness_check():
     """Readiness check for Kubernetes/container orchestration."""
