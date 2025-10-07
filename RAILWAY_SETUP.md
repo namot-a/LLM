@@ -1,61 +1,73 @@
-# Railway Setup
+# Railway Setup - Быстрая настройка
 
-## 1. Переменные окружения
+## ✅ Что уже сделано:
+- ✅ Код загружен на GitHub
+- ✅ Проект создан в Railway
+- ✅ PostgreSQL база данных добавлена
+- ✅ Сервис приложения создан
 
-В Railway Dashboard добавьте следующие переменные:
+## 🔧 Что нужно сделать:
 
-### База данных (автоматически)
+### 1. Добавить переменные окружения
+
+В Railway Dashboard (уже открыт в браузере):
+1. Выберите сервис **LLM**
+2. Перейдите на вкладку **Variables**  
+3. Нажмите **New Variable** и добавьте:
+
+**Обязательные переменные:**
+
 ```bash
+# База данных (reference к Postgres сервису)
 DATABASE_URL=${{Postgres.DATABASE_URL}}
+
+# Telegram
+TELEGRAM_BOT_TOKEN=your_bot_token_from_@BotFather
+ALLOWED_TELEGRAM_USER_IDS=your_telegram_id
+WEBHOOK_SECRET_PATH=random_secret_123456
+
+# Notion  
+NOTION_TOKEN=secret_xxxxxxxxxxxx
+NOTION_DATABASE_IDS=notion_db_id_1,notion_db_id_2
+
+# OpenAI
+OPENAI_API_KEY=sk-xxxxxxxxxxxx
 ```
 
-### Telegram
+**Опциональные (уже есть значения по умолчанию):**
 ```bash
-TELEGRAM_BOT_TOKEN=your_bot_token
-ALLOWED_TELEGRAM_USER_IDS=123456789,987654321
-WEBHOOK_SECRET_PATH=your_random_secret_path
-```
-
-### Notion
-```bash
-NOTION_TOKEN=your_notion_integration_token
-NOTION_DATABASE_IDS=database_id_1,database_id_2
-```
-
-### OpenAI
-```bash
-OPENAI_API_KEY=your_openai_api_key
 OPENAI_CHAT_MODEL=gpt-4o-mini
 OPENAI_EMBED_MODEL=text-embedding-3-small
+API_URL=https://your-service.up.railway.app
+LOG_LEVEL=INFO
 ```
 
-### API URL (важно!)
+### 2. Получить API URL
+
+После добавления переменных:
+1. Railway автоматически запустит деплой
+2. Дождитесь успешного деплоя (2-3 минуты)
+3. Скопируйте URL сервиса (например: `https://llm-production.up.railway.app`)
+4. Добавьте переменную `API_URL` с этим URL
+
+### 3. Проверка деплоя
+
 ```bash
-API_URL=https://your-service-name.up.railway.app
+# Локально через CLI
+railway logs --service LLM
+
+# Или проверьте в браузере
+curl https://your-service.up.railway.app/health
 ```
 
-## 2. Настройка PostgreSQL
-
-После создания Postgres сервиса:
-
-1. Откройте Postgres сервис
-2. Перейдите в "Connect" → "Postgres Connection URL"
-3. Подключитесь через CLI:
-```bash
-railway connect postgres
+Должен вернуться ответ:
+```json
+{"status":"healthy","timestamp":"2025-01-..."}
 ```
 
-4. Выполните команду для установки pgvector:
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
-```
+### 4. Настройка pgvector (автоматически)
 
-## 3. Деплой
-
-После настройки переменных:
-1. Railway автоматически пересоберёт проект
-2. Проверьте логи: `railway logs`
-3. Проверьте здоровье: `curl https://your-service.up.railway.app/health`
+База данных и расширение pgvector инициализируются автоматически при первом запуске!
 
 ## 4. Синхронизация Notion
 
