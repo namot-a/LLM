@@ -10,11 +10,18 @@ from .logger import get_logger
 logger = get_logger(__name__)
 
 # Create async engine for better performance
-# Railway uses postgresql://, need to convert to postgresql+asyncpg://
+# Railway pgvector uses postgres:// (without ql), need to convert to postgresql+asyncpg://
 database_url = settings.database_url
-if database_url.startswith("postgresql://"):
+
+# Handle different PostgreSQL URL formats
+if database_url.startswith("postgres://"):
+    # Railway pgvector format: postgres:// -> postgresql+asyncpg://
+    database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif database_url.startswith("postgresql://"):
+    # Standard format: postgresql:// -> postgresql+asyncpg://
     database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 elif database_url.startswith("postgresql+psycopg://"):
+    # Psycopg format: postgresql+psycopg:// -> postgresql+asyncpg://
     database_url = database_url.replace("postgresql+psycopg://", "postgresql+asyncpg://", 1)
 
 engine = create_async_engine(
