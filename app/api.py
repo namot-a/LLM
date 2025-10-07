@@ -15,6 +15,11 @@ from .retrieval import retrieve, format_sources
 from .llm import answer_with_context, calculate_cost
 from .models import QueryLog, Feedback
 
+# Admin DB utilities
+from sqlalchemy import text  # added for raw SQL execution
+from .db import engine  # use engine for DDL
+from .models import Base  # use metadata for table creation
+
 logger = get_logger(__name__)
 router = APIRouter()
 
@@ -48,6 +53,55 @@ class IngestResponse(BaseModel):
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+
+
+# Admin DB utilities
+@router.get("/admin/db-info")
+async def admin_db_info(secret: str):
+    """Return list of public tables and installed extensions (admin)."""
+    if secret != settings.webhook_secret_path:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        async with engine.begin() as conn:
+            tables_result = await conn.execute(text(
+                """
+                SELECT table_name
+                FROM information_schema.tables
+                WHERE table_schema = 'public'
+                ORDER BY table_name
+                """
+            ))
+            tables = [row[0] for row in tables_result]
+
+            exts_result = await conn.execute(text("SELECT extname FROM pg_extension ORDER BY extname"))
+            extensions = [row[0] for row in exts_result]
+
+        return {
+            "tables": tables,
+            "extensions": extensions,
+        }
+    except Exception as e:
+        logger.error("DB info error", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to read DB info")
+
+
+@router.post("/admin/db-init")
+async def admin_db_init(secret: str):
+    """Ensure pgvector extension and create tables (admin)."""
+    if secret != settings.webhook_secret_path:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        async with engine.begin() as conn:
+            # Ensure pgvector extension
+            await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            # Create tables
+            await conn.run_sync(Base.metadata.create_all)
+        return {"status": "ok", "message": "Extensions ensured and tables created"}
+    except Exception as e:
+        logger.error("DB init error", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Failed to init DB: {str(e)}")
 
 
 @router.post("/admin/ingest", response_model=IngestResponse)
