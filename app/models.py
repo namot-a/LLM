@@ -41,17 +41,18 @@ class Chunk(Base):
     chunk_index = Column(Integer, nullable=False)
     heading_path = Column(Text)
     content = Column(Text, nullable=False)
-    embedding = Column(Vector(EMBEDDING_DIM))
+    embedding = Column(Vector(EMBEDDING_DIM), nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     
     # Relationships
     document = relationship("Document", back_populates="chunks")
     
-    # Indexes for better performance
+    # Indexes for better performance (ivfflat index can be added later with pgvector)
     __table_args__ = (
         Index("idx_chunks_document_id", "document_id"),
-        Index("idx_chunks_embedding", "embedding", postgresql_using="ivfflat", 
-              postgresql_with={"lists": 100}, postgresql_ops={"embedding": "vector_cosine_ops"}),
+        # Note: ivfflat index requires pgvector extension
+        # Create manually if pgvector is available:
+        # CREATE INDEX idx_chunks_embedding ON chunks USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
     )
     
     def __repr__(self) -> str:
