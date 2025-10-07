@@ -51,15 +51,14 @@ async def health_check():
 
 
 @router.post("/admin/ingest", response_model=IngestResponse)
-async def admin_ingest(secret: str, background_tasks: BackgroundTasks):
+async def admin_ingest(secret: str, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     """Trigger Notion database ingestion."""
     if secret != settings.webhook_secret_path:
         raise HTTPException(status_code=403, detail="Forbidden")
     
     try:
         logger.info("Starting Notion ingestion")
-        async with get_db() as db:
-            stats = await ingest_all(db)
+        stats = await ingest_all(db)
         
         return IngestResponse(
             status="completed",
