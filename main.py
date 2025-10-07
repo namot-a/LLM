@@ -16,37 +16,37 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     # Startup
-    logger.info("Starting Notion RAG Bot")
+    logger.info("=== Starting Notion RAG Bot ===")
+    
+    # Initialize database
+    try:
+        await init_db()
+        logger.info("✓ Database initialized successfully")
+    except Exception as e:
+        logger.error("✗ Database initialization failed", error=str(e))
+        # Don't raise - continue startup
+    
+    # Set Telegram webhook
+    try:
+        await set_webhook()
+        logger.info("✓ Telegram webhook configured successfully")
+    except Exception as e:
+        logger.error("✗ Telegram webhook configuration failed", error=str(e))
+        # Don't raise - continue startup
+    
+    logger.info("=== Application startup complete ===")
+    
+    yield
+    
+    # Shutdown
+    logger.info("=== Shutting down Notion RAG Bot ===")
     
     try:
-        # Initialize database
-        await init_db()
-        logger.info("Database initialized")
-        
-        # Set Telegram webhook
-        await set_webhook()
-        logger.info("Telegram webhook configured")
-        
-        yield
-        
+        # Close database connections only
+        await close_db()
+        logger.info("✓ Database connections closed")
     except Exception as e:
-        logger.error("Startup failed", error=str(e))
-        raise
-    finally:
-        # Shutdown
-        logger.info("Shutting down Notion RAG Bot")
-        
-        try:
-            # Delete webhook
-            await delete_webhook()
-            logger.info("Telegram webhook removed")
-            
-            # Close database connections
-            await close_db()
-            logger.info("Database connections closed")
-            
-        except Exception as e:
-            logger.error("Shutdown error", error=str(e))
+        logger.error("✗ Shutdown error", error=str(e))
 
 
 # Create FastAPI application

@@ -234,4 +234,37 @@ async def get_stats(db: AsyncSession = Depends(get_db)):
     return {"message": "Stats endpoint not implemented yet"}
 
 
+@router.post("/admin/test-start")
+async def admin_test_start(secret: str):
+    """Test /start command to bot (admin)."""
+    if secret != settings.webhook_secret_path:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    
+    try:
+        from bot.telegram import bot
+        import asyncio
+        
+        # Get first allowed user ID
+        user_ids = settings.get_allowed_user_ids()
+        if not user_ids:
+            return {"error": "No allowed users configured"}
+        
+        test_user_id = user_ids[0]
+        
+        # Send test message
+        message = await bot.send_message(
+            chat_id=test_user_id,
+            text="🤖 Тест /start - бот работает!"
+        )
+        
+        return {
+            "status": "ok",
+            "test_user_id": test_user_id,
+            "message_id": message.message_id
+        }
+    except Exception as e:
+        logger.error("Test start failed", error=str(e))
+        raise HTTPException(status_code=500, detail=f"Test failed: {str(e)}")
+
+
 # Exception handlers are handled in individual endpoints
