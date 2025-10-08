@@ -225,68 +225,52 @@ async def upsert_page(db: AsyncSession, page_id: str, last_edited: datetime) -> 
 
 async def ingest_all(db: AsyncSession) -> Dict[str, int]:
     """
-    Ingest all pages from configured Notion databases.
+    Ingest all pages from configured Notion page IDs.
     
     Returns:
         Dictionary with ingestion statistics
     """
-    stats = {"processed": 0, "errors": 0, "databases": len(DATABASE_IDS)}
+    stats = {"processed": 0, "errors": 0, "pages": len(DATABASE_IDS)}
     
-    logger.info("Starting Notion ingestion", databases=DATABASE_IDS)
+    logger.info("Starting Notion pages ingestion", pages=len(DATABASE_IDS))
     
-    for db_id in DATABASE_IDS:
-        try:
-            logger.info("Processing database", database_id=db_id)
-            cursor = None
-            
-            while True:
-                # Query database pages
-                if cursor:
-                    resp = await notion.databases.query(database_id=db_id, start_cursor=cursor)
+    # Process each page ID directly (not as database)
+    semaphore = asyncio.Semaphore(5)  # Limit concurrent requests
+    
+    async def process_single_page(page_id: str):
+        """Process a single Notion page."""
+        async with semaphore:
+            try:
+                logger.info("Processing page", page_id=page_id)
+                
+                # Get page metadata to retrieve last_edited_time
+                page_data = await notion.pages.retrieve(page_id=page_id)
+                last_edited_str = page_data.get("last_edited_time")
+                
+                if not last_edited_str:
+                    logger.warning("No last_edited_time for page", page_id=page_id)
+                    last_edited = datetime.utcnow()
                 else:
-                    resp = await notion.databases.query(database_id=db_id)
+                    last_edited = datetime.fromisoformat(last_edited_str.replace("Z", "+00:00"))
                 
-                pages = resp.get("results", [])
-                logger.info("Found pages in batch", database_id=db_id, count=len(pages))
-                
-                # Process pages in parallel (with concurrency limit)
-                semaphore = asyncio.Semaphore(5)  # Limit concurrent requests
-                
-                async def process_page(page_data):
-                    async with semaphore:
-                        try:
-                            page_id = page_data["id"]
-                            last_edited_str = page_data.get("last_edited_time")
-                            if not last_edited_str:
-                                logger.warning("No last_edited_time for page", page_id=page_id)
-                                return
-                            
-                            last_edited = datetime.fromisoformat(last_edited_str.replace("Z", "+00:00"))
-                            await upsert_page(db, page_id, last_edited)
-                            stats["processed"] += 1
-                            
-                        except Exception as e:
-                            logger.error("Error processing page", page_id=page_data.get("id"), error=str(e))
-                            stats["errors"] += 1
-                
-                # Process all pages in this batch
-                await asyncio.gather(*[process_page(page) for page in pages], return_exceptions=True)
-                
-                # Commit after each batch
+                # Upsert the page and its content
+                await upsert_page(db, page_id, last_edited)
                 await db.commit()
                 
-                # Check if there are more pages
-                if not resp.get("has_more"):
-                    break
-                cursor = resp.get("next_cursor")
+                stats["processed"] += 1
+                logger.info("✓ Page processed successfully", page_id=page_id)
                 
-                # Small delay between batches
-                await asyncio.sleep(0.5)
-        
-        except Exception as e:
-            logger.error("Error processing database", database_id=db_id, error=str(e))
-            stats["errors"] += 1
-            continue
+            except Exception as e:
+                logger.error("✗ Error processing page", page_id=page_id, error=str(e))
+                stats["errors"] += 1
+                # Rollback on error
+                await db.rollback()
     
-    logger.info("Notion ingestion completed", stats=stats)
+    # Process all pages in parallel with concurrency limit
+    await asyncio.gather(
+        *[process_single_page(page_id) for page_id in DATABASE_IDS],
+        return_exceptions=True
+    )
+    
+    logger.info("Notion pages ingestion completed", stats=stats)
     return stats

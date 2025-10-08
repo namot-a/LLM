@@ -98,118 +98,173 @@ async def format_response(data: dict) -> str:
 
 @dp.message(Command("start"))
 async def handle_start(message: types.Message):
-    """Handle /start command."""
-    user_id = message.from_user.id
-    
-    # Check if user is allowed
-    if not is_user_allowed(user_id):
-        await message.reply(
-            "🚫 Доступ ограничен. Обратитесь к администратору для получения доступа к боту.",
-            parse_mode="Markdown"
-        )
-        return
-    
-    welcome_text = (
-        "👋 Привет! Я консультирую по регламентам в компании HuntIT.\n\n"
-        "Задай свой вопрос, и я найду релевантную информацию в наших документах.\n\n"
-        "Например:\n"
-        "• Как провести собеседование?\n"
-        "• Какие требования к внешнему виду?\n"
-        "• Как назначить скрининг?\n\n"
-        "Просто напиши свой вопрос! 🤖"
-    )
-    
-    await message.reply(welcome_text, parse_mode="Markdown")
-
-
-@dp.message()
-async def handle_message(message: types.Message):
-    """Handle incoming messages."""
+    """Handle /start command - fully error-resistant."""
     try:
-        # Check if it's a private chat
-        if message.chat.type not in ("private",):
-            return
-        
         user_id = message.from_user.id
         
         # Check if user is allowed
         if not is_user_allowed(user_id):
-            await message.reply(
-                "🚫 Доступ ограничен. Обратитесь к администратору для получения доступа к боту.",
-                parse_mode="Markdown"
-            )
+            try:
+                await message.reply(
+                    "🚫 Доступ ограничен. Обратитесь к администратору для получения доступа к боту.",
+                    parse_mode="Markdown"
+                )
+            except Exception:
+                pass
+            return
+        
+        welcome_text = (
+            "👋 Привет! Я консультирую по регламентам в компании HuntIT.\n\n"
+            "Задай свой вопрос, и я найду релевантную информацию в наших документах.\n\n"
+            "Например:\n"
+            "• Как провести собеседование?\n"
+            "• Какие требования к внешнему виду?\n"
+            "• Как назначить скрининг?\n\n"
+            "Просто напиши свой вопрос! 🤖"
+        )
+        
+        try:
+            await message.reply(welcome_text, parse_mode="Markdown")
+            logger.info("Start command processed", user_id=user_id)
+        except Exception as e:
+            logger.error("Error sending start message", error=str(e), user_id=user_id)
+            
+    except Exception as e:
+        logger.error("Critical error in start handler", error=str(e))
+        # Bot must never crash
+
+
+@dp.message()
+async def handle_message(message: types.Message):
+    """Handle incoming messages - fully error-resistant."""
+    user_id = None
+    try:
+        user_id = message.from_user.id
+        
+        # Check if it's a private chat
+        if message.chat.type not in ("private",):
+            return
+        
+        # Check if user is allowed
+        if not is_user_allowed(user_id):
+            try:
+                await message.reply(
+                    "🚫 Доступ ограничен. Обратитесь к администратору для получения доступа к боту.",
+                    parse_mode="Markdown"
+                )
+            except Exception:
+                pass  # Ignore if can't send response
             return
         
         # Check if message has text
         text = (message.text or "").strip()
         if not text:
-            await message.reply("Пожалуйста, отправьте текстовое сообщение с вашим вопросом.")
+            try:
+                await message.reply("Пожалуйста, отправьте текстовое сообщение с вашим вопросом.")
+            except Exception:
+                pass
             return
         
         # Check message length
         if len(text) > 1000:
-            await message.reply("Сообщение слишком длинное. Пожалуйста, сократите вопрос до 1000 символов.")
+            try:
+                await message.reply("Сообщение слишком длинное. Пожалуйста, сократите вопрос до 1000 символов.")
+            except Exception:
+                pass
             return
         
         logger.info("Processing message", user_id=user_id, message_length=len(text))
         
         # Send typing action
-        await send_typing_action(message.chat.id)
+        try:
+            await send_typing_action(message.chat.id)
+        except Exception:
+            pass  # Non-critical
         
         # Call API
         try:
             data = await call_api(text, user_id)
         except TelegramError as e:
-            await message.reply(f"❌ Ошибка обработки запроса: {str(e)}")
+            try:
+                await message.reply(f"❌ Ошибка обработки запроса: {str(e)}")
+            except Exception:
+                pass
+            return
+        except Exception as e:
+            logger.error("API call error", error=str(e), user_id=user_id)
+            try:
+                await message.reply("❌ Ошибка обработки запроса. Попробуйте позже.")
+            except Exception:
+                pass
             return
         
         # Format and send response
-        response_text = await format_response(data)
+        try:
+            response_text = await format_response(data)
+            
+            # Send response with feedback keyboard
+            await message.reply(
+                response_text,
+                parse_mode="Markdown",
+                disable_web_page_preview=True,
+                reply_markup=create_feedback_keyboard(message.message_id)
+            )
+            
+            logger.info("Response sent", user_id=user_id, response_length=len(response_text))
+            
+        except TelegramBadRequest as e:
+            logger.error("Telegram bad request", error=str(e), user_id=user_id)
+            try:
+                await message.reply("❌ Ошибка отправки сообщения. Попробуйте еще раз.")
+            except Exception:
+                pass
+        except Exception as e:
+            logger.error("Error sending response", error=str(e), user_id=user_id)
+            try:
+                await message.reply("❌ Произошла ошибка. Попробуйте позже.")
+            except Exception:
+                pass
         
-        # Send response with feedback keyboard
-        sent_message = await message.reply(
-            response_text,
-            parse_mode="Markdown",
-            disable_web_page_preview=True,
-            reply_markup=create_feedback_keyboard(message.message_id)
-        )
-        
-        logger.info("Response sent", user_id=user_id, response_length=len(response_text))
-        
-    except TelegramBadRequest as e:
-        logger.error("Telegram bad request", error=str(e), user_id=message.from_user.id)
-        await message.reply("❌ Ошибка отправки сообщения. Попробуйте еще раз.")
-    except TelegramNetworkError as e:
-        logger.error("Telegram network error", error=str(e), user_id=message.from_user.id)
-        await message.reply("❌ Проблемы с сетью. Попробуйте позже.")
     except Exception as e:
-        logger.error("Unexpected error in message handler", error=str(e), user_id=message.from_user.id)
-        await message.reply("❌ Произошла неожиданная ошибка. Попробуйте позже.")
+        logger.error("Critical error in message handler", error=str(e), user_id=user_id)
+        # Try to send error message but don't crash if it fails
+        try:
+            if message and message.chat:
+                await message.reply("❌ Произошла критическая ошибка. Бот продолжает работу.")
+        except Exception:
+            pass  # Bot must never crash
 
 
 @dp.callback_query()
 async def handle_callback_query(callback_query: types.CallbackQuery):
-    """Handle callback queries (feedback buttons)."""
+    """Handle callback queries (feedback buttons) - fully error-resistant."""
+    user_id = None
     try:
         data = callback_query.data
         user_id = callback_query.from_user.id
         
         if not data.startswith("feedback_"):
-            await callback_query.answer("Неизвестная команда")
+            try:
+                await callback_query.answer("Неизвестная команда")
+            except Exception:
+                pass
             return
         
         # Parse feedback data
         parts = data.split("_")
         if len(parts) != 3:
-            await callback_query.answer("Ошибка в данных")
+            try:
+                await callback_query.answer("Ошибка в данных")
+            except Exception:
+                pass
             return
         
         rating = parts[1]  # "good" or "bad"
         message_id = int(parts[2])
         
         # Submit feedback via API
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            try:
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.post(
                     f"{settings.api_url}/api/v1/feedback",
                     json={
@@ -220,25 +275,35 @@ async def handle_callback_query(callback_query: types.CallbackQuery):
                     params={"telegram_user_id": user_id}
                 )
                 response.raise_for_status()
-            except Exception as e:
-                logger.error("Failed to submit feedback", error=str(e), user_id=user_id)
+        except Exception as e:
+            logger.error("Failed to submit feedback", error=str(e), user_id=user_id)
+            try:
                 await callback_query.answer("❌ Ошибка отправки отзыва")
-                return
+            except Exception:
+                pass
+            return
         
         # Update button text
-        if rating == "good":
-            await callback_query.answer("✅ Спасибо за положительный отзыв!")
-        else:
-            await callback_query.answer("❌ Спасибо за отзыв. Мы учтем ваше мнение.")
-        
-        # Remove keyboard
-        await callback_query.message.edit_reply_markup(reply_markup=None)
-        
-        logger.info("Feedback submitted", user_id=user_id, rating=rating, message_id=message_id)
+        try:
+            if rating == "good":
+                await callback_query.answer("✅ Спасибо за положительный отзыв!")
+            else:
+                await callback_query.answer("❌ Спасибо за отзыв. Мы учтем ваше мнение.")
+            
+            # Remove keyboard
+            await callback_query.message.edit_reply_markup(reply_markup=None)
+            
+            logger.info("Feedback submitted", user_id=user_id, rating=rating, message_id=message_id)
+        except Exception as e:
+            logger.error("Error updating callback", error=str(e), user_id=user_id)
         
     except Exception as e:
-        logger.error("Error handling callback query", error=str(e), user_id=callback_query.from_user.id)
-        await callback_query.answer("❌ Ошибка обработки отзыва")
+        logger.error("Critical error in callback handler", error=str(e), user_id=user_id)
+        try:
+            if callback_query:
+                await callback_query.answer("❌ Ошибка обработки отзыва")
+        except Exception:
+            pass  # Bot must never crash
 
 
 @router.post(f"/telegram/webhook/{{secret}}")
