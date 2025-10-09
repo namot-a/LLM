@@ -102,7 +102,7 @@ class TelegramUser(Base):
     
     user_id = Column(BigInteger, primary_key=True, index=True)
     username = Column(String, nullable=True)
-    role = Column(String, default="user", nullable=False)  # user, admin
+    role = Column(String, default="Recruiter", nullable=False)  # Recruiter, Team Lead, Head
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

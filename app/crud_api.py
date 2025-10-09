@@ -26,7 +26,7 @@ class ChunkUpdate(BaseModel):
 class TelegramUserCreate(BaseModel):
     user_id: int
     username: Optional[str] = None
-    role: str = "user"
+    role: str = "Recruiter"  # Recruiter, Team Lead, Head
 
 
 class TelegramUserUpdate(BaseModel):
@@ -503,6 +503,8 @@ async def create_telegram_user(data: TelegramUserCreate, db: AsyncSession = Depe
             role=data.role,
         )
         db.add(user)
+        await db.commit()
+        await db.refresh(user)
         
         logger.info("Telegram user created", user_id=data.user_id)
         
@@ -542,6 +544,9 @@ async def update_telegram_user(
         if data.is_active is not None:
             user.is_active = data.is_active
         
+        await db.commit()
+        await db.refresh(user)
+        
         logger.info("Telegram user updated", user_id=user_id)
         
         return {
@@ -570,6 +575,7 @@ async def delete_telegram_user(user_id: int, db: AsyncSession = Depends(get_db))
             raise HTTPException(status_code=404, detail="User not found")
         
         await db.delete(user)
+        await db.commit()
         
         logger.info("Telegram user deleted", user_id=user_id)
         return {"message": "User deleted successfully"}

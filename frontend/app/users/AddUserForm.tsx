@@ -7,7 +7,7 @@ export default function AddUserForm() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
   const [username, setUsername] = useState("");
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState("Recruiter");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -38,7 +38,7 @@ export default function AddUserForm() {
       if (response.ok) {
         setUserId("");
         setUsername("");
-        setRole("user");
+        setRole("Recruiter");
         router.refresh();
       } else {
         setError(data.error || "Не удалось добавить пользователя");
@@ -104,8 +104,9 @@ export default function AddUserForm() {
               borderRadius: "6px",
             }}
           >
-            <option value="user">Пользователь</option>
-            <option value="admin">Администратор</option>
+            <option value="Recruiter">Recruiter</option>
+            <option value="Team Lead">Team Lead</option>
+            <option value="Head">Head</option>
           </select>
         </div>
 
@@ -131,10 +132,6 @@ export default function AddUserForm() {
           {error}
         </div>
       )}
-
-      <p style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
-        * User ID можно узнать у бота <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" style={{ color: "#007bff" }}>@userinfobot</a>
-      </p>
     </form>
   );
 }

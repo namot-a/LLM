@@ -60,8 +60,12 @@ export default function UserRow({ user }: { user: TelegramUser }) {
       <td>{user.user_id}</td>
       <td>{user.username || "—"}</td>
       <td>
-        <span className={user.role === "admin" ? "badge badge-info" : "badge badge-success"}>
-          {user.role === "admin" ? "Администратор" : "Пользователь"}
+        <span className={
+          user.role === "Head" ? "badge badge-danger" : 
+          user.role === "Team Lead" ? "badge badge-info" : 
+          "badge badge-success"
+        }>
+          {user.role}
         </span>
       </td>
       <td>

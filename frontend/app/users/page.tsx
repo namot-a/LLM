@@ -27,7 +27,7 @@ export default async function UsersPage() {
   const users: TelegramUser[] = await getTelegramUsers();
 
   const activeUsers = users.filter((u) => u.is_active).length;
-  const adminUsers = users.filter((u) => u.role === "admin").length;
+  const headUsers = users.filter((u) => u.role === "Head").length;
 
   return (
     <div>
@@ -70,8 +70,8 @@ export default async function UsersPage() {
             <div className="stat-label">Активных</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">{adminUsers}</div>
-            <div className="stat-label">Администраторов</div>
+            <div className="stat-value">{headUsers}</div>
+            <div className="stat-label">Head</div>
           </div>
         </div>
 
