@@ -39,19 +39,19 @@ export default async function QueryLogsPage() {
     <div>
       <header className="header">
         <div className="container">
-          <h1>🤖 Notion TG Admin Panel</h1>
+          <h1>🤖 Панель управления Notion TG</h1>
           <nav className="nav">
             <Link href="/" className="nav-link">
-              Dashboard
+              Главная
             </Link>
             <Link href="/documents" className="nav-link">
-              Documents
+              Документы
             </Link>
             <Link href="/query-logs" className="nav-link active">
-              Query Logs
+              Запросы
             </Link>
             <Link href="/feedback" className="nav-link">
-              Feedback
+              Отзывы
             </Link>
           </nav>
         </div>
@@ -59,29 +59,29 @@ export default async function QueryLogsPage() {
 
       <div className="container">
         <h2 style={{ marginBottom: "20px", fontSize: "24px" }}>
-          💬 Query Logs ({queryLogs.length})
+          💬 Журнал запросов ({queryLogs.length})
         </h2>
 
         {/* Stats */}
         <div className="stats">
           <div className="stat-card">
             <div className="stat-value">{queryLogs.length}</div>
-            <div className="stat-label">Total Queries</div>
+            <div className="stat-label">Всего запросов</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">{totalTokens.toLocaleString()}</div>
-            <div className="stat-label">Total Tokens</div>
+            <div className="stat-value">{totalTokens.toLocaleString('ru-RU')}</div>
+            <div className="stat-label">Всего токенов</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">${totalCost.toFixed(2)}</div>
-            <div className="stat-label">Total Cost</div>
+            <div className="stat-label">Общая стоимость</div>
           </div>
         </div>
 
         {queryLogs.length === 0 ? (
           <div className="empty-state">
-            <h3>No query logs found</h3>
-            <p>Query logs will appear here when users ask questions</p>
+            <h3>Запросов не найдено</h3>
+            <p>Запросы появятся здесь, когда пользователи начнут задавать вопросы</p>
           </div>
         ) : (
           <div>
@@ -91,42 +91,42 @@ export default async function QueryLogsPage() {
                 <div className="card-meta">
                   <strong>ID:</strong> {log.id}
                   <br />
-                  <strong>Time:</strong> {new Date(log.ts).toLocaleString()}
+                  <strong>Время:</strong> {new Date(log.ts).toLocaleString('ru-RU')}
                   <br />
                   {log.telegram_user_id && (
                     <>
-                      <strong>User ID:</strong> {log.telegram_user_id}
+                      <strong>ID пользователя:</strong> {log.telegram_user_id}
                       <br />
                     </>
                   )}
                   {log.model && (
                     <>
-                      <strong>Model:</strong> {log.model}
+                      <strong>Модель:</strong> {log.model}
                       <br />
                     </>
                   )}
                 </div>
                 <div className="card-content">
-                  <strong>Answer:</strong>
+                  <strong>Ответ:</strong>
                   <br />
                   {log.answer}
                 </div>
                 {log.prompt_tokens && (
                   <div className="card-meta">
-                    <strong>Tokens:</strong> {log.prompt_tokens} prompt +{" "}
-                    {log.completion_tokens} completion ={" "}
+                    <strong>Токены:</strong> {log.prompt_tokens} промпт +{" "}
+                    {log.completion_tokens} ответ ={" "}
                     {(log.prompt_tokens || 0) + (log.completion_tokens || 0)}{" "}
-                    total
+                    всего
                     {log.cost_usd && (
                       <>
                         {" "}
-                        • <strong>Cost:</strong> ${Number(log.cost_usd).toFixed(4)}
+                        • <strong>Стоимость:</strong> ${Number(log.cost_usd).toFixed(4)}
                       </>
                     )}
                     {log.processing_time_ms && (
                       <>
                         {" "}
-                        • <strong>Time:</strong> {log.processing_time_ms}ms
+                        • <strong>Время:</strong> {log.processing_time_ms}мс
                       </>
                     )}
                   </div>
@@ -142,4 +142,3 @@ export default async function QueryLogsPage() {
     </div>
   );
 }
-

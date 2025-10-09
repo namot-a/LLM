@@ -8,7 +8,7 @@ export default function DeleteButton({ logId }: { logId: number }) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this query log?")) {
+    if (!confirm("Вы уверены, что хотите удалить этот запрос?")) {
       return;
     }
 
@@ -21,11 +21,11 @@ export default function DeleteButton({ logId }: { logId: number }) {
       if (response.ok) {
         router.refresh();
       } else {
-        alert("Failed to delete query log");
+        alert("Не удалось удалить запрос");
       }
     } catch (error) {
       console.error("Error deleting query log:", error);
-      alert("Error deleting query log");
+      alert("Ошибка при удалении запроса");
     } finally {
       setIsDeleting(false);
     }
@@ -37,7 +37,7 @@ export default function DeleteButton({ logId }: { logId: number }) {
       disabled={isDeleting}
       className="btn btn-danger"
     >
-      {isDeleting ? "Deleting..." : "Delete"}
+      {isDeleting ? "Удаление..." : "Удалить"}
     </button>
   );
 }

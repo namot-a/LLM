@@ -36,19 +36,19 @@ export default async function FeedbackPage() {
     <div>
       <header className="header">
         <div className="container">
-          <h1>🤖 Notion TG Admin Panel</h1>
+          <h1>🤖 Панель управления Notion TG</h1>
           <nav className="nav">
             <Link href="/" className="nav-link">
-              Dashboard
+              Главная
             </Link>
             <Link href="/documents" className="nav-link">
-              Documents
+              Документы
             </Link>
             <Link href="/query-logs" className="nav-link">
-              Query Logs
+              Запросы
             </Link>
             <Link href="/feedback" className="nav-link active">
-              Feedback
+              Отзывы
             </Link>
           </nav>
         </div>
@@ -56,33 +56,33 @@ export default async function FeedbackPage() {
 
       <div className="container">
         <h2 style={{ marginBottom: "20px", fontSize: "24px" }}>
-          ⭐ User Feedback ({feedback.length})
+          ⭐ Отзывы пользователей ({feedback.length})
         </h2>
 
         {/* Stats */}
         <div className="stats">
           <div className="stat-card">
             <div className="stat-value">{feedback.length}</div>
-            <div className="stat-label">Total Feedback</div>
+            <div className="stat-label">Всего отзывов</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{goodFeedback}</div>
-            <div className="stat-label">👍 Positive</div>
+            <div className="stat-label">👍 Положительных</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{badFeedback}</div>
-            <div className="stat-label">👎 Negative</div>
+            <div className="stat-label">👎 Отрицательных</div>
           </div>
           <div className="stat-card">
             <div className="stat-value">{satisfactionRate}%</div>
-            <div className="stat-label">Satisfaction Rate</div>
+            <div className="stat-label">Уровень удовлетворенности</div>
           </div>
         </div>
 
         {feedback.length === 0 ? (
           <div className="empty-state">
-            <h3>No feedback yet</h3>
-            <p>User feedback will appear here</p>
+            <h3>Отзывов пока нет</h3>
+            <p>Отзывы пользователей появятся здесь</p>
           </div>
         ) : (
           <div>
@@ -103,33 +103,33 @@ export default async function FeedbackPage() {
                         : "badge badge-danger"
                     }
                   >
-                    {fb.rating === "good" ? "👍 Good" : "👎 Bad"}
+                    {fb.rating === "good" ? "👍 Хорошо" : "👎 Плохо"}
                   </span>
                   <span className="card-meta">
                     <strong>ID:</strong> {fb.id}
                   </span>
                 </div>
                 <div className="card-meta">
-                  <strong>Time:</strong> {new Date(fb.ts).toLocaleString()}
+                  <strong>Время:</strong> {new Date(fb.ts).toLocaleString('ru-RU')}
                   <br />
-                  <strong>User ID:</strong> {fb.telegram_user_id}
+                  <strong>ID пользователя:</strong> {fb.telegram_user_id}
                   <br />
                   {fb.message_id && (
                     <>
-                      <strong>Message ID:</strong> {fb.message_id}
+                      <strong>ID сообщения:</strong> {fb.message_id}
                       <br />
                     </>
                   )}
                   {fb.query_log_id && (
                     <>
-                      <strong>Query Log ID:</strong> {fb.query_log_id}
+                      <strong>ID запроса:</strong> {fb.query_log_id}
                       <br />
                     </>
                   )}
                 </div>
                 {fb.comment && (
                   <div className="card-content">
-                    <strong>Comment:</strong>
+                    <strong>Комментарий:</strong>
                     <br />
                     {fb.comment}
                   </div>
@@ -145,4 +145,3 @@ export default async function FeedbackPage() {
     </div>
   );
 }
-

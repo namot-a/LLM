@@ -29,19 +29,19 @@ export default async function DocumentsPage() {
     <div>
       <header className="header">
         <div className="container">
-          <h1>🤖 Notion TG Admin Panel</h1>
+          <h1>🤖 Панель управления Notion TG</h1>
           <nav className="nav">
             <Link href="/" className="nav-link">
-              Dashboard
+              Главная
             </Link>
             <Link href="/documents" className="nav-link active">
-              Documents
+              Документы
             </Link>
             <Link href="/query-logs" className="nav-link">
-              Query Logs
+              Запросы
             </Link>
             <Link href="/feedback" className="nav-link">
-              Feedback
+              Отзывы
             </Link>
           </nav>
         </div>
@@ -49,13 +49,13 @@ export default async function DocumentsPage() {
 
       <div className="container">
         <h2 style={{ marginBottom: "20px", fontSize: "24px" }}>
-          📄 All Documents ({documents.length})
+          📄 Все документы ({documents.length})
         </h2>
 
         {documents.length === 0 ? (
           <div className="empty-state">
-            <h3>No documents found</h3>
-            <p>Documents will appear here after Notion sync</p>
+            <h3>Документы не найдены</h3>
+            <p>Документы появятся здесь после синхронизации с Notion</p>
           </div>
         ) : (
           <div>
@@ -67,11 +67,11 @@ export default async function DocumentsPage() {
                   <br />
                   <strong>Notion Page ID:</strong> {doc.notion_page_id}
                   <br />
-                  <strong>Last edited:</strong>{" "}
-                  {new Date(doc.last_edited).toLocaleString()}
+                  <strong>Последнее изменение:</strong>{" "}
+                  {new Date(doc.last_edited).toLocaleString('ru-RU')}
                   <br />
-                  <strong>Created:</strong>{" "}
-                  {new Date(doc.created_at).toLocaleString()}
+                  <strong>Создан:</strong>{" "}
+                  {new Date(doc.created_at).toLocaleString('ru-RU')}
                 </div>
                 <div className="card-actions">
                   <a
@@ -80,13 +80,13 @@ export default async function DocumentsPage() {
                     rel="noopener noreferrer"
                     className="btn btn-primary"
                   >
-                    Open in Notion
+                    Открыть в Notion
                   </a>
                   <Link
                     href={`/documents/${doc.id}`}
                     className="btn btn-secondary"
                   >
-                    View Details
+                    Подробнее
                   </Link>
                   <DeleteButton documentId={doc.id} />
                 </div>

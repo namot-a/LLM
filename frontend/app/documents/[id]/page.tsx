@@ -53,28 +53,28 @@ export default async function DocumentDetailPage({
       <div>
         <header className="header">
           <div className="container">
-            <h1>🤖 Notion TG Admin Panel</h1>
+            <h1>🤖 Панель управления Notion TG</h1>
             <nav className="nav">
               <Link href="/" className="nav-link">
-                Dashboard
+                Главная
               </Link>
               <Link href="/documents" className="nav-link active">
-                Documents
+                Документы
               </Link>
               <Link href="/query-logs" className="nav-link">
-                Query Logs
+                Запросы
               </Link>
               <Link href="/feedback" className="nav-link">
-                Feedback
+                Отзывы
               </Link>
             </nav>
           </div>
         </header>
 
         <div className="container">
-          <div className="error">Document not found</div>
+          <div className="error">Документ не найден</div>
           <Link href="/documents" className="btn btn-primary">
-            ← Back to Documents
+            ← Назад к документам
           </Link>
         </div>
       </div>
@@ -85,19 +85,19 @@ export default async function DocumentDetailPage({
     <div>
       <header className="header">
         <div className="container">
-          <h1>🤖 Notion TG Admin Panel</h1>
+          <h1>🤖 Панель управления Notion TG</h1>
           <nav className="nav">
             <Link href="/" className="nav-link">
-              Dashboard
+              Главная
             </Link>
             <Link href="/documents" className="nav-link active">
-              Documents
+              Документы
             </Link>
             <Link href="/query-logs" className="nav-link">
-              Query Logs
+              Запросы
             </Link>
             <Link href="/feedback" className="nav-link">
-              Feedback
+              Отзывы
             </Link>
           </nav>
         </div>
@@ -105,7 +105,7 @@ export default async function DocumentDetailPage({
 
       <div className="container">
         <Link href="/documents" className="btn btn-secondary" style={{ marginBottom: "20px" }}>
-          ← Back to Documents
+          ← Назад к документам
         </Link>
 
         <div className="card">
@@ -115,11 +115,11 @@ export default async function DocumentDetailPage({
             <br />
             <strong>Notion Page ID:</strong> {document.notion_page_id}
             <br />
-            <strong>Last edited:</strong> {new Date(document.last_edited).toLocaleString()}
+            <strong>Последнее изменение:</strong> {new Date(document.last_edited).toLocaleString('ru-RU')}
             <br />
-            <strong>Created:</strong> {new Date(document.created_at).toLocaleString()}
+            <strong>Создан:</strong> {new Date(document.created_at).toLocaleString('ru-RU')}
             <br />
-            <strong>Updated:</strong> {new Date(document.updated_at).toLocaleString()}
+            <strong>Обновлен:</strong> {new Date(document.updated_at).toLocaleString('ru-RU')}
           </div>
           <div className="card-actions">
             <a
@@ -128,19 +128,19 @@ export default async function DocumentDetailPage({
               rel="noopener noreferrer"
               className="btn btn-primary"
             >
-              Open in Notion
+              Открыть в Notion
             </a>
           </div>
         </div>
 
         <h3 style={{ marginTop: "40px", marginBottom: "20px", fontSize: "20px" }}>
-          Text Chunks ({chunks.length})
+          Текстовые фрагменты ({chunks.length})
         </h3>
 
         {chunks.length === 0 ? (
           <div className="empty-state">
-            <h3>No chunks found</h3>
-            <p>This document has no indexed chunks yet</p>
+            <h3>Фрагменты не найдены</h3>
+            <p>У этого документа пока нет проиндексированных фрагментов</p>
           </div>
         ) : (
           <div>
@@ -150,7 +150,7 @@ export default async function DocumentDetailPage({
                   <div className="card-title">{chunk.heading_path}</div>
                 )}
                 <div className="card-meta">
-                  <strong>Chunk #{chunk.chunk_index + 1}</strong> • ID: {chunk.id}
+                  <strong>Фрагмент #{chunk.chunk_index + 1}</strong> • ID: {chunk.id}
                 </div>
                 <div className="card-content">{chunk.content}</div>
               </div>

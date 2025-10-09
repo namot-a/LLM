@@ -8,7 +8,7 @@ export default function DeleteButton({ documentId }: { documentId: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this document?")) {
+    if (!confirm("Вы уверены, что хотите удалить этот документ?")) {
       return;
     }
 
@@ -21,11 +21,11 @@ export default function DeleteButton({ documentId }: { documentId: string }) {
       if (response.ok) {
         router.refresh();
       } else {
-        alert("Failed to delete document");
+        alert("Не удалось удалить документ");
       }
     } catch (error) {
       console.error("Error deleting document:", error);
-      alert("Error deleting document");
+      alert("Ошибка при удалении документа");
     } finally {
       setIsDeleting(false);
     }
@@ -37,7 +37,7 @@ export default function DeleteButton({ documentId }: { documentId: string }) {
       disabled={isDeleting}
       className="btn btn-danger"
     >
-      {isDeleting ? "Deleting..." : "Delete"}
+      {isDeleting ? "Удаление..." : "Удалить"}
     </button>
   );
 }

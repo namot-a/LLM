@@ -8,7 +8,7 @@ export default function DeleteButton({ feedbackId }: { feedbackId: number }) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this feedback?")) {
+    if (!confirm("Вы уверены, что хотите удалить этот отзыв?")) {
       return;
     }
 
@@ -21,11 +21,11 @@ export default function DeleteButton({ feedbackId }: { feedbackId: number }) {
       if (response.ok) {
         router.refresh();
       } else {
-        alert("Failed to delete feedback");
+        alert("Не удалось удалить отзыв");
       }
     } catch (error) {
       console.error("Error deleting feedback:", error);
-      alert("Error deleting feedback");
+      alert("Ошибка при удалении отзыва");
     } finally {
       setIsDeleting(false);
     }
@@ -37,7 +37,7 @@ export default function DeleteButton({ feedbackId }: { feedbackId: number }) {
       disabled={isDeleting}
       className="btn btn-danger"
     >
-      {isDeleting ? "Deleting..." : "Delete"}
+      {isDeleting ? "Удаление..." : "Удалить"}
     </button>
   );
 }

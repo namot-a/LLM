@@ -31,6 +31,109 @@ A production-ready Telegram bot that answers questions based on your Notion docu
                     │    Vercel    │
                     └──────────────┘
 ```
+### Frontend (Next.js 15)
+```
+
+#### Страницы
+
+1. **Dashboard (`/`)**
+   - Статистика (документы, запросы, отзывы)
+   - Последние 5 документов
+   - Последние 5 запросов
+   - Последние 5 отзывов
+   - Процент удовлетворенности
+
+2. **Documents (`/documents`)**
+   - Список всех документов из Notion
+   - Кнопки: Открыть в Notion, Просмотр, Удалить
+   - Детальная страница документа с chunks
+
+3. **Query Logs (`/query-logs`)**
+   - Все запросы пользователей
+   - Вопросы и ответы
+   - Токены и стоимость
+   - Время обработки
+   - Кнопка удаления
+
+4. **Feedback (`/feedback`)**
+   - Все отзывы пользователей
+   - Рейтинги (👍/👎)
+   - Комментарии
+   - Статистика удовлетворенности
+   - Кнопка удаления
+
+#### API Routes (Next.js)
+
+Все роуты проксируют запросы к backend:
+
+**Documents:**
+- `GET /api/documents` - Список документов
+- `GET /api/documents/[id]` - Один документ
+- `PUT /api/documents/[id]` - Обновить документ
+- `DELETE /api/documents/[id]` - Удалить документ
+
+**Chunks:**
+- `GET /api/chunks` - Список chunks
+- `GET /api/chunks/[id]` - Один chunk
+- `PUT /api/chunks/[id]` - Обновить chunk
+- `DELETE /api/chunks/[id]` - Удалить chunk
+
+**Query Logs:**
+- `GET /api/query-logs` - Список логов
+- `GET /api/query-logs/[id]` - Один лог
+- `DELETE /api/query-logs/[id]` - Удалить лог
+
+**Feedback:**
+- `GET /api/feedback` - Список отзывов
+- `GET /api/feedback/[id]` - Один отзыв
+- `DELETE /api/feedback/[id]` - Удалить отзыв
+
+#### Особенности
+
+- ✅ Server-Side Rendering для быстрой загрузки
+- ✅ TypeScript для type safety
+- ✅ Реактивные компоненты с `"use client"`
+- ✅ Простой CSS без зависимостей
+- ✅ Современный дизайн
+- ✅ Адаптивная верстка
+- ✅ Готовность к Vercel деплою
+
+### 2. Backend CRUD API
+
+**Новый файл:** `app/crud_api.py`
+
+#### Эндпоинты
+
+**Documents:**
+```python
+GET    /api/documents              # Список всех документов
+GET    /api/documents/{id}         # Один документ
+PUT    /api/documents/{id}         # Обновить (title, url)
+DELETE /api/documents/{id}         # Удалить (+ все chunks)
+```
+
+**Chunks:**
+```python
+GET    /api/chunks                      # Список chunks (limit=100)
+GET    /api/chunks/document/{doc_id}    # Chunks одного документа
+GET    /api/chunks/{id}                 # Один chunk
+PUT    /api/chunks/{id}                 # Обновить (content, heading_path)
+DELETE /api/chunks/{id}                 # Удалить
+```
+
+**Query Logs:**
+```python
+GET    /api/query-logs             # Список логов (optional limit)
+GET    /api/query-logs/{id}        # Один лог
+DELETE /api/query-logs/{id}        # Удалить
+```
+
+**Feedback:**
+```python
+GET    /api/feedback               # Список отзывов (optional limit)
+GET    /api/feedback/{id}          # Один отзыв
+DELETE /api/feedback/{id}          # Удалить
+```
 
 ### Tech Stack
 
@@ -47,123 +150,6 @@ A production-ready Telegram bot that answers questions based on your Notion docu
 - TypeScript
 - Server-side rendering
 - Modern CSS
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.13+
-- PostgreSQL 12+ with pgvector extension
-- Node.js 20+
-- Telegram Bot Token
-- Notion API Token
-- OpenAI API Key
-
-### 1. Backend Setup
-
-```bash
-# Clone repository
-git clone <your-repo>
-cd notiontgLLM
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your credentials
-
-# Run backend
-python run.py
-```
-
-### 2. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env with backend URL
-
-# Run development server
-npm run dev
-```
-
-Visit:
-- Backend: http://localhost:8000
-- Frontend: http://localhost:3000
-
-## 📦 Deployment
-
-### Backend → Railway/Render
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
-
-Quick deploy to Railway:
-```bash
-railway login
-railway init
-railway up
-```
-
-### Frontend → Vercel
-
-See [frontend/QUICKSTART.md](frontend/QUICKSTART.md) for detailed instructions.
-
-Quick deploy to Vercel:
-```bash
-cd frontend
-vercel login
-vercel --prod
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-#### Backend (`.env`)
-
-```env
-# Telegram
-TELEGRAM_BOT_TOKEN=your_bot_token
-ALLOWED_TELEGRAM_USER_IDS=123456789,987654321
-WEBHOOK_SECRET_PATH=your_webhook_secret
-
-# Notion
-NOTION_TOKEN=secret_...
-NOTION_DATABASE_IDS=database_id_1,database_id_2
-
-# OpenAI
-OPENAI_API_KEY=sk-...
-OPENAI_CHAT_MODEL=gpt-4o-mini
-OPENAI_EMBED_MODEL=text-embedding-3-small
-EMBEDDING_DIM=1536
-
-# Database
-DATABASE_URL=postgresql://user:password@host:port/dbname
-
-# API Settings
-API_URL=https://your-backend-url.railway.app
-HOST=0.0.0.0
-PORT=8000
-```
-
-#### Frontend (`frontend/.env`)
-
-```env
-NEXT_PUBLIC_API_URL=https://your-backend-url.railway.app
-API_URL=https://your-backend-url.railway.app
-```
-
-## 📚 API Endpoints
 
 ### Public Endpoints
 
@@ -186,31 +172,6 @@ API_URL=https://your-backend-url.railway.app
 - `DELETE /api/query-logs/{id}` - Delete log
 - `DELETE /api/feedback/{id}` - Delete feedback
 
-See [API documentation](http://localhost:8000/docs) for full details.
-
-## 🎯 Usage
-
-### 1. Sync Notion Data
-
-```bash
-curl -X POST "http://localhost:8000/api/v1/admin/ingest?secret=YOUR_SECRET"
-```
-
-### 2. Ask Questions via Telegram
-
-Open your bot in Telegram:
-```
-/start
-What is the deployment process?
-```
-
-### 3. View Data in Admin Panel
-
-Open http://localhost:3000 to see:
-- 📊 Dashboard with statistics
-- 📄 Documents from Notion
-- 💬 Query logs with costs
-- ⭐ User feedback
 
 ## 📁 Project Structure
 
@@ -343,46 +304,9 @@ curl "http://localhost:8000/api/v1/admin/db-info?secret=YOUR_SECRET"
 - **Caching**: FastAPI response caching
 - **Frontend**: Server-side rendering for speed
 
-## 💡 Features Roadmap
-
-- [ ] Multi-language support
-- [ ] Voice message support
-- [ ] Image processing
-- [ ] Advanced analytics
-- [ ] Rate limiting
-- [ ] User authentication for admin panel
-- [ ] Scheduled Notion syncs
-- [ ] Export data functionality
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-MIT
-
-## 🙏 Acknowledgments
-
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [Next.js](https://nextjs.org/)
 - [OpenAI](https://openai.com/)
 - [Notion](https://www.notion.so/)
 - [python-telegram-bot](https://python-telegram-bot.org/)
 - [pgvector](https://github.com/pgvector/pgvector)
-
-## 📞 Support
-
-For issues and questions:
-- Check [DEPLOYMENT.md](DEPLOYMENT.md) for deployment help
-- Check [frontend/QUICKSTART.md](frontend/QUICKSTART.md) for frontend help
-- Open an issue on GitHub
-
----
-
-Made with ❤️ for better documentation access
-
