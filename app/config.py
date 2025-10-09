@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     
     # Telegram
     telegram_bot_token: str = Field(..., env="TELEGRAM_BOT_TOKEN")
-    allowed_telegram_user_ids: str = Field(..., env="ALLOWED_TELEGRAM_USER_IDS")
+    allowed_telegram_user_ids: str = Field(default="", env="ALLOWED_TELEGRAM_USER_IDS")
     webhook_secret_path: str = Field(..., env="WEBHOOK_SECRET_PATH")
     
     # Notion
@@ -44,7 +44,9 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
     
     def get_allowed_user_ids(self) -> List[int]:
-        """Get allowed user IDs as a list."""
+        """Get allowed user IDs as a list (fallback if database is unavailable)."""
+        if not self.allowed_telegram_user_ids:
+            return []
         return [int(x.strip()) for x in self.allowed_telegram_user_ids.split(",") if x.strip()]
     
     def get_database_ids(self) -> List[str]:
