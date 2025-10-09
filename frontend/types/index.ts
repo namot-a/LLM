@@ -42,6 +42,15 @@ export interface Feedback {
   comment: string | null;
 }
 
+export interface TelegramUser {
+  user_id: number;
+  username: string | null;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // API Response Types
 export interface ApiResponse<T> {
   data?: T;

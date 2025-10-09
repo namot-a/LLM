@@ -50,6 +50,9 @@ export default async function FeedbackPage() {
             <Link href="/feedback" className="nav-link active">
               Отзывы
             </Link>
+            <Link href="/users" className="nav-link">
+              Пользователи
+            </Link>
           </nav>
         </div>
       </header>

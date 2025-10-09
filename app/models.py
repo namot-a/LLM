@@ -3,7 +3,7 @@ import os
 import uuid
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import Column, String, Text, Integer, ForeignKey, DateTime, BigInteger, Numeric, Index
+from sqlalchemy import Column, String, Text, Integer, ForeignKey, DateTime, BigInteger, Numeric, Index, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from pgvector.sqlalchemy import Vector
@@ -94,3 +94,18 @@ class Feedback(Base):
     
     def __repr__(self) -> str:
         return f"<Feedback(id={self.id}, user={self.telegram_user_id}, rating={self.rating})>"
+
+
+class TelegramUser(Base):
+    """Telegram user model for access control."""
+    __tablename__ = "telegram_users"
+    
+    user_id = Column(BigInteger, primary_key=True, index=True)
+    username = Column(String, nullable=True)
+    role = Column(String, default="user", nullable=False)  # user, admin
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self) -> str:
+        return f"<TelegramUser(user_id={self.user_id}, username='{self.username}', role='{self.role}')>"

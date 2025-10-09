@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from pydantic import BaseModel
 from .db import get_db
-from .models import Document, Chunk, QueryLog, Feedback
+from .models import Document, Chunk, QueryLog, Feedback, TelegramUser
 from .logger import get_logger
 
 logger = get_logger(__name__)
@@ -21,6 +21,18 @@ class DocumentUpdate(BaseModel):
 class ChunkUpdate(BaseModel):
     content: Optional[str] = None
     heading_path: Optional[str] = None
+
+
+class TelegramUserCreate(BaseModel):
+    user_id: int
+    username: Optional[str] = None
+    role: str = "user"
+
+
+class TelegramUserUpdate(BaseModel):
+    username: Optional[str] = None
+    role: Optional[str] = None
+    is_active: Optional[bool] = None
 
 
 # Documents endpoints
@@ -423,4 +435,147 @@ async def delete_feedback(feedback_id: int, db: AsyncSession = Depends(get_db)):
     except Exception as e:
         logger.error("Error deleting feedback", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to delete feedback")
+
+
+# Telegram Users endpoints
+@router.get("/telegram-users")
+async def get_telegram_users(db: AsyncSession = Depends(get_db)):
+    """Get all telegram users."""
+    try:
+        result = await db.execute(select(TelegramUser).order_by(TelegramUser.created_at.desc()))
+        users = result.scalars().all()
+        
+        return [
+            {
+                "user_id": user.user_id,
+                "username": user.username,
+                "role": user.role,
+                "is_active": user.is_active,
+                "created_at": user.created_at.isoformat(),
+                "updated_at": user.updated_at.isoformat(),
+            }
+            for user in users
+        ]
+    except Exception as e:
+        logger.error("Error fetching telegram users", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to fetch telegram users")
+
+
+@router.get("/telegram-users/{user_id}")
+async def get_telegram_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    """Get telegram user by ID."""
+    try:
+        result = await db.execute(select(TelegramUser).where(TelegramUser.user_id == user_id))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {
+            "user_id": user.user_id,
+            "username": user.username,
+            "role": user.role,
+            "is_active": user.is_active,
+            "created_at": user.created_at.isoformat(),
+            "updated_at": user.updated_at.isoformat(),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error fetching telegram user", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to fetch telegram user")
+
+
+@router.post("/telegram-users")
+async def create_telegram_user(data: TelegramUserCreate, db: AsyncSession = Depends(get_db)):
+    """Create telegram user."""
+    try:
+        # Check if user already exists
+        result = await db.execute(select(TelegramUser).where(TelegramUser.user_id == data.user_id))
+        existing_user = result.scalar_one_or_none()
+        
+        if existing_user:
+            raise HTTPException(status_code=400, detail="User already exists")
+        
+        user = TelegramUser(
+            user_id=data.user_id,
+            username=data.username,
+            role=data.role,
+        )
+        db.add(user)
+        
+        logger.info("Telegram user created", user_id=data.user_id)
+        
+        return {
+            "user_id": user.user_id,
+            "username": user.username,
+            "role": user.role,
+            "is_active": user.is_active,
+            "created_at": user.created_at.isoformat(),
+            "updated_at": user.updated_at.isoformat(),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error creating telegram user", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to create telegram user")
+
+
+@router.put("/telegram-users/{user_id}")
+async def update_telegram_user(
+    user_id: int, 
+    data: TelegramUserUpdate, 
+    db: AsyncSession = Depends(get_db)
+):
+    """Update telegram user."""
+    try:
+        result = await db.execute(select(TelegramUser).where(TelegramUser.user_id == user_id))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        if data.username is not None:
+            user.username = data.username
+        if data.role is not None:
+            user.role = data.role
+        if data.is_active is not None:
+            user.is_active = data.is_active
+        
+        logger.info("Telegram user updated", user_id=user_id)
+        
+        return {
+            "user_id": user.user_id,
+            "username": user.username,
+            "role": user.role,
+            "is_active": user.is_active,
+            "created_at": user.created_at.isoformat(),
+            "updated_at": user.updated_at.isoformat(),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error updating telegram user", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to update telegram user")
+
+
+@router.delete("/telegram-users/{user_id}")
+async def delete_telegram_user(user_id: int, db: AsyncSession = Depends(get_db)):
+    """Delete telegram user."""
+    try:
+        result = await db.execute(select(TelegramUser).where(TelegramUser.user_id == user_id))
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        await db.delete(user)
+        
+        logger.info("Telegram user deleted", user_id=user_id)
+        return {"message": "User deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error deleting telegram user", error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to delete telegram user")
 

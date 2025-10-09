@@ -62,6 +62,9 @@ export default async function Home() {
             <Link href="/feedback" className="nav-link">
               Отзывы
             </Link>
+            <Link href="/users" className="nav-link">
+              Пользователи
+            </Link>
           </nav>
         </div>
       </header>

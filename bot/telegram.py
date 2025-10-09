@@ -10,6 +10,9 @@ import httpx
 from app.config import settings
 from app.logger import get_logger
 from app.exceptions import TelegramError
+from app.db import get_db
+from app.models import TelegramUser
+from sqlalchemy import select
 
 logger = get_logger(__name__)
 
@@ -19,15 +22,26 @@ router = APIRouter()
 bot = Bot(settings.telegram_bot_token)
 dp = Dispatcher()
 
-# Allowed users (empty list means all users allowed)
-ALLOWED_USERS = set(settings.get_allowed_user_ids()) if settings.get_allowed_user_ids() else None
 
-
-def is_user_allowed(user_id: int) -> bool:
-    """Check if user is allowed to use the bot."""
-    if ALLOWED_USERS is None:
-        return True
-    return user_id in ALLOWED_USERS
+async def is_user_allowed(user_id: int) -> bool:
+    """Check if user is allowed to use the bot (check database)."""
+    try:
+        async for db in get_db():
+            result = await db.execute(
+                select(TelegramUser).where(
+                    TelegramUser.user_id == user_id,
+                    TelegramUser.is_active == True
+                )
+            )
+            user = result.scalar_one_or_none()
+            return user is not None
+    except Exception as e:
+        logger.error("Error checking user access", user_id=user_id, error=str(e))
+        # Fallback to env check if DB fails
+        allowed_users = set(settings.get_allowed_user_ids()) if settings.get_allowed_user_ids() else None
+        if allowed_users is None:
+            return True
+        return user_id in allowed_users
 
 
 def create_feedback_keyboard(message_id: int) -> InlineKeyboardMarkup:
@@ -103,7 +117,7 @@ async def handle_start(message: types.Message):
         user_id = message.from_user.id
         
         # Check if user is allowed
-        if not is_user_allowed(user_id):
+        if not await is_user_allowed(user_id):
             try:
                 await message.reply(
                     "🚫 Доступ ограничен. Обратитесь к администратору для получения доступа к боту.",
@@ -146,7 +160,7 @@ async def handle_message(message: types.Message):
             return
         
         # Check if user is allowed
-        if not is_user_allowed(user_id):
+        if not await is_user_allowed(user_id):
             try:
                 await message.reply(
                     "🚫 Доступ ограничен. Обратитесь к администратору для получения доступа к боту.",

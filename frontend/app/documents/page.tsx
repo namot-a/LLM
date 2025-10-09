@@ -43,6 +43,9 @@ export default async function DocumentsPage() {
             <Link href="/feedback" className="nav-link">
               Отзывы
             </Link>
+            <Link href="/users" className="nav-link">
+              Пользователи
+            </Link>
           </nav>
         </div>
       </header>
