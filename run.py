@@ -11,3 +11,4 @@ if __name__ == "__main__":
         reload=settings.log_level == "DEBUG",
         log_level=settings.log_level.lower()
     )
+
