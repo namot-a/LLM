@@ -102,6 +102,9 @@ export default async function DocumentDetailPage({
             <Link href="/users" className="nav-link">
               Пользователи
             </Link>
+            <Link href="/notion" className="nav-link">
+              Регламенты
+            </Link>
           </nav>
         </div>
       </header>

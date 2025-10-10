@@ -8,6 +8,7 @@ from app.logger import get_logger
 from app.db import init_db, close_db
 from app.api import router as api_router
 from app.crud_api import router as crud_router
+from app.notion_pages_api import router as notion_pages_router
 from bot.telegram import router as telegram_router, set_webhook, delete_webhook
 
 logger = get_logger(__name__)
@@ -26,7 +27,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error("✗ Database initialization failed", error=str(e))
         # Don't raise - continue startup
-    
+     
     # Set Telegram webhook
     try:
         await set_webhook()
@@ -70,6 +71,7 @@ app.add_middleware(
 # Include routers
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(crud_router)
+app.include_router(notion_pages_router)
 app.include_router(telegram_router)
 
 

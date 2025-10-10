@@ -109,3 +109,21 @@ class TelegramUser(Base):
     
     def __repr__(self) -> str:
         return f"<TelegramUser(user_id={self.user_id}, username='{self.username}', role='{self.role}')>"
+
+
+class NotionPage(Base):
+    """Notion page for manual sync management."""
+    __tablename__ = "notion_pages"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    page_url = Column(String, nullable=False, unique=True, index=True)
+    page_id = Column(String, nullable=False, unique=True, index=True)
+    title = Column(String, nullable=True)
+    status = Column(String, default="pending", nullable=False)  # pending, syncing, synced, error
+    last_synced = Column(DateTime(timezone=True), nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self) -> str:
+        return f"<NotionPage(id={self.id}, title='{self.title}', status='{self.status}')>"

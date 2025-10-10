@@ -51,6 +51,18 @@ export interface TelegramUser {
   updated_at: string;
 }
 
+export interface NotionPage {
+  id: number;
+  page_url: string;
+  page_id: string;
+  title: string;
+  status: string;
+  last_synced: string | null;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // API Response Types
 export interface ApiResponse<T> {
   data?: T;
