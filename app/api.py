@@ -240,17 +240,32 @@ async def submit_feedback(
 ):
     """Submit user feedback."""
     try:
+        # Find the most recent query_log for this user
+        query_log_id = None
+        result = await db.execute(
+            select(QueryLog)
+            .where(QueryLog.telegram_user_id == telegram_user_id)
+            .order_by(QueryLog.ts.desc())
+            .limit(1)
+        )
+        recent_log = result.scalar_one_or_none()
+        if recent_log:
+            query_log_id = recent_log.id
+        
         feedback = Feedback(
             telegram_user_id=telegram_user_id,
             message_id=request.message_id,
+            query_log_id=query_log_id,
             rating=request.rating,
             comment=request.comment
         )
         db.add(feedback)
+        await db.commit()
         
         logger.info("Feedback submitted", 
                    user_id=telegram_user_id, 
-                   rating=request.rating)
+                   rating=request.rating,
+                   query_log_id=query_log_id)
         
         return {"status": "success", "message": "Feedback received"}
         
