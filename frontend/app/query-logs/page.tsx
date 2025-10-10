@@ -34,7 +34,7 @@ export default async function QueryLogsPage() {
     (sum, log) => sum + Number(log.cost_usd || 0),
     0
   );
-  const failedQueries = queryLogs.filter(log => !log.has_answer).length;
+  const failedQueries = queryLogs.filter(log => log.has_answer === false).length;
 
   return (
     <div>
@@ -98,11 +98,11 @@ export default async function QueryLogsPage() {
           <div>
             {queryLogs.map((log) => (
               <div key={log.id} className="card">
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-                  <div className="card-title" style={{ marginBottom: 0 }}>{log.question}</div>
-                  {!log.has_answer && (
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px", flexWrap: "wrap" }}>
+                  <div className="card-title" style={{ marginBottom: 0, flex: 1 }}>{log.question}</div>
+                  {log.has_answer === false && (
                     <span className="badge badge-danger" style={{ fontSize: "12px" }}>
-                      Без ответа
+                      ⚠️ Без ответа
                     </span>
                   )}
                 </div>

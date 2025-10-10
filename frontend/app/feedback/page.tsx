@@ -117,9 +117,13 @@ export default async function FeedbackPage() {
                 </div>
                 
                 {/* Вопрос пользователя */}
-                {fb.question && (
+                {fb.question ? (
                   <div className="card-content" style={{ background: "#f8f9fa", padding: "12px", borderRadius: "6px", marginBottom: "10px" }}>
                     <strong>Вопрос:</strong> {fb.question}
+                  </div>
+                ) : (
+                  <div className="card-meta" style={{ color: "#999", fontStyle: "italic", marginBottom: "10px" }}>
+                    Вопрос не найден (старая запись)
                   </div>
                 )}
                 
@@ -134,12 +138,6 @@ export default async function FeedbackPage() {
                   ) : (
                     <>
                       <strong>ID пользователя:</strong> {fb.telegram_user_id}
-                      <br />
-                    </>
-                  )}
-                  {fb.query_log_id && (
-                    <>
-                      <strong>ID запроса:</strong> {fb.query_log_id}
                       <br />
                     </>
                   )}

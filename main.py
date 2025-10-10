@@ -9,7 +9,6 @@ from app.db import init_db, close_db
 from app.api import router as api_router
 from app.crud_api import router as crud_router
 from app.notion_pages_api import router as notion_pages_router
-from app.admin_api import router as admin_router
 from bot.telegram import router as telegram_router, set_webhook, delete_webhook
 
 logger = get_logger(__name__)
@@ -71,7 +70,6 @@ app.add_middleware(
 
 # Include routers
 app.include_router(api_router, prefix="/api/v1")
-app.include_router(admin_router)
 app.include_router(crud_router)
 app.include_router(notion_pages_router)
 app.include_router(telegram_router)
