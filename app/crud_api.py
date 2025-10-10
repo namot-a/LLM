@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api")
 class DocumentUpdate(BaseModel):
     title: Optional[str] = None
     url: Optional[str] = None
+    allowed_roles: Optional[list[str]] = None
 
 
 class ChunkUpdate(BaseModel):
@@ -49,6 +50,7 @@ async def get_documents(db: AsyncSession = Depends(get_db)):
                 "notion_page_id": doc.notion_page_id,
                 "title": doc.title,
                 "url": doc.url,
+                "allowed_roles": doc.allowed_roles or [],
                 "last_edited": doc.last_edited.isoformat(),
                 "created_at": doc.created_at.isoformat(),
                 "updated_at": doc.updated_at.isoformat(),
@@ -75,6 +77,7 @@ async def get_document(document_id: str, db: AsyncSession = Depends(get_db)):
             "notion_page_id": doc.notion_page_id,
             "title": doc.title,
             "url": doc.url,
+            "allowed_roles": doc.allowed_roles or [],
             "last_edited": doc.last_edited.isoformat(),
             "created_at": doc.created_at.isoformat(),
             "updated_at": doc.updated_at.isoformat(),
@@ -125,14 +128,27 @@ async def update_document(
             doc.title = data.title
         if data.url is not None:
             doc.url = data.url
+        if data.allowed_roles is not None:
+            doc.allowed_roles = data.allowed_roles
+            # Also update all chunks of this document
+            from sqlalchemy import update
+            await db.execute(
+                update(Chunk)
+                .where(Chunk.document_id == doc.id)
+                .values(allowed_roles=data.allowed_roles)
+            )
         
-        logger.info("Document updated", document_id=document_id)
+        await db.commit()
+        await db.refresh(doc)
+        
+        logger.info("Document updated", document_id=document_id, allowed_roles=data.allowed_roles)
         
         return {
             "id": str(doc.id),
             "notion_page_id": doc.notion_page_id,
             "title": doc.title,
             "url": doc.url,
+            "allowed_roles": doc.allowed_roles or [],
             "last_edited": doc.last_edited.isoformat(),
             "created_at": doc.created_at.isoformat(),
             "updated_at": doc.updated_at.isoformat(),

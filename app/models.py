@@ -21,6 +21,7 @@ class Document(Base):
     notion_page_id = Column(String, unique=True, nullable=False, index=True)
     title = Column(Text, nullable=False)
     url = Column(Text, nullable=False)
+    allowed_roles = Column(ARRAY(String), nullable=True)  # Roles with access to this document
     last_edited = Column(DateTime(timezone=True), nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)

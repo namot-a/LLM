@@ -4,6 +4,7 @@ export interface Document {
   notion_page_id: string;
   title: string;
   url: string;
+  allowed_roles: string[];
   last_edited: string;
   created_at: string;
   updated_at: string;

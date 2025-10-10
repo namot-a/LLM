@@ -182,15 +182,17 @@ async def upsert_page(db: AsyncSession, page_id: str, last_edited: datetime, all
                 notion_page_id=page_id,
                 title=title,
                 url=url,
+                allowed_roles=allowed_roles,
                 last_edited=last_edited
             )
             db.add(doc)
             await db.flush()
-            logger.info("Created new document", document_id=doc.id, title=title)
+            logger.info("Created new document", document_id=doc.id, title=title, allowed_roles=allowed_roles)
         else:
             # Update existing document
             doc.title = title
             doc.url = url
+            doc.allowed_roles = allowed_roles
             doc.last_edited = last_edited
             doc.updated_at = datetime.utcnow()
             

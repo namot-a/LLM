@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Document } from "@/types";
 import DeleteButton from "./DeleteButton";
+import EditRolesButton from "./EditRolesButton";
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -68,6 +69,33 @@ export default async function DocumentsPage() {
             {documents.map((doc) => (
               <div key={doc.id} className="card">
                 <div className="card-title">{doc.title}</div>
+                
+                {/* Роли доступа */}
+                <div style={{ marginTop: "10px", marginBottom: "10px" }}>
+                  <strong style={{ fontSize: "14px", color: "#666" }}>Доступ:</strong>{" "}
+                  {doc.allowed_roles && doc.allowed_roles.length > 0 ? (
+                    <span style={{ display: "inline-flex", gap: "5px", marginLeft: "5px", flexWrap: "wrap" }}>
+                      {doc.allowed_roles.map(role => (
+                        <span 
+                          key={role} 
+                          className={
+                            role === "Head" ? "badge badge-danger" : 
+                            role === "Team Lead" ? "badge badge-info" : 
+                            "badge badge-success"
+                          }
+                          style={{ fontSize: "12px" }}
+                        >
+                          {role}
+                        </span>
+                      ))}
+                    </span>
+                  ) : (
+                    <span className="badge" style={{ background: "#999", color: "white", fontSize: "12px" }}>
+                      Всем ролям
+                    </span>
+                  )}
+                </div>
+
                 <div className="card-meta">
                   <strong>ID:</strong> {doc.id}
                   <br />
@@ -94,6 +122,10 @@ export default async function DocumentsPage() {
                   >
                     Подробнее
                   </Link>
+                  <EditRolesButton 
+                    documentId={doc.id} 
+                    currentRoles={doc.allowed_roles || []}
+                  />
                   <DeleteButton documentId={doc.id} />
                 </div>
               </div>
