@@ -167,7 +167,7 @@ async def query_endpoint(request: QueryRequest, db: AsyncSession = Depends(get_d
                 processing_time_ms=processing_time
             )
             db.add(query_log)
-            await db.commit()
+            # Don't commit here - get_db() auto-commits at the end
             
             return QueryResponse(
                 answer=answer,
@@ -204,7 +204,7 @@ async def query_endpoint(request: QueryRequest, db: AsyncSession = Depends(get_d
             has_answer=True
         )
         db.add(query_log)
-        await db.commit()
+        # Don't commit here - get_db() auto-commits at the end
         
         logger.info("Query processed successfully", 
                    user_id=request.telegram_user_id,
@@ -260,7 +260,7 @@ async def submit_feedback(
             comment=request.comment
         )
         db.add(feedback)
-        await db.commit()
+        # Don't commit here - get_db() auto-commits at the end
         
         logger.info("Feedback submitted", 
                    user_id=telegram_user_id, 
