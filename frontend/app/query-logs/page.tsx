@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { QueryLog } from "@/types";
 import DeleteButton from "./DeleteButton";
+import FailedQueriesPage from "./FailedQueriesPage";
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -65,9 +66,20 @@ export default async function QueryLogsPage() {
       </header>
 
       <div className="container">
-        <h2 style={{ marginBottom: "20px", fontSize: "24px" }}>
-          💬 Журнал запросов ({queryLogs.length})
-        </h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+          <h2 style={{ fontSize: "24px", margin: 0 }}>
+            💬 Журнал запросов ({queryLogs.length})
+          </h2>
+          {failedQueries > 0 && (
+            <Link 
+              href="#failed" 
+              className="btn btn-danger"
+              style={{ textDecoration: "none" }}
+            >
+              ⚠️ Без ответа: {failedQueries}
+            </Link>
+          )}
+        </div>
 
         {/* Stats */}
         <div className="stats">
@@ -160,6 +172,13 @@ export default async function QueryLogsPage() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* Failed Queries Section */}
+        {failedQueries > 0 && (
+          <section id="failed" style={{ marginTop: "60px" }}>
+            <FailedQueriesPage />
+          </section>
         )}
       </div>
     </div>

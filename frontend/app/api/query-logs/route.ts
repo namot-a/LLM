@@ -6,10 +6,16 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get("limit");
+    const failedOnly = searchParams.get("failed_only");
     
-    const url = limit 
-      ? `${API_URL}/api/query-logs?limit=${limit}`
-      : `${API_URL}/api/query-logs`;
+    let url = `${API_URL}/api/query-logs`;
+    const params = new URLSearchParams();
+    if (limit) params.append("limit", limit);
+    if (failedOnly) params.append("failed_only", failedOnly);
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
     
     const response = await fetch(url, {
       cache: "no-store",
