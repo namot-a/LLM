@@ -120,7 +120,7 @@ class NotionPage(Base):
     page_url = Column(String, nullable=False, unique=True, index=True)
     page_id = Column(String, nullable=False, unique=True, index=True)
     title = Column(String, nullable=True)
-    allowed_roles = Column(ARRAY(String), nullable=False, default=["Recruiter", "Team Lead", "Head"])  # Roles with access
+    allowed_roles = Column(ARRAY(String), nullable=True)  # Roles with access
     status = Column(String, default="pending", nullable=False)  # pending, syncing, synced, error
     last_synced = Column(DateTime(timezone=True), nullable=True)
     error_message = Column(Text, nullable=True)
