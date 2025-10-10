@@ -152,9 +152,9 @@ async def query_endpoint(request: QueryRequest, db: AsyncSession = Depends(get_d
             logger.warning("No relevant chunks found", question=request.question[:100], user_role=user_role)
             # Check if it's because of role restrictions
             if user_role and user_role != "Head":
-                answer = "❌ Эта информация недоступна вашей роли. Обратитесь к руководителю или администратору."
+                answer = "Эта информация недоступна вашей роли. Обратитесь к руководителю или администратору."
             else:
-                answer = "Я не нашла релевантной информации в регламентах. Попробуйте переформулировать вопрос или обратитесь к администратору."
+                answer = "Я не нашел этого в регламентах. Попробуйте уточнить формулировку вопроса или обратитесь к администратору."
             
             # Log failed query
             processing_time = int((time.time() - start_time) * 1000)
