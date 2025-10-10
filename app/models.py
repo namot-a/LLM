@@ -74,6 +74,7 @@ class QueryLog(Base):
     model = Column(String, nullable=True)
     cost_usd = Column(Numeric(10, 4), nullable=True)
     processing_time_ms = Column(Integer, nullable=True)  # Processing time in milliseconds
+    has_answer = Column(Boolean, default=True, nullable=False, index=True)  # Track if bot found answer
     
     def __repr__(self) -> str:
         return f"<QueryLog(id={self.id}, user={self.telegram_user_id}, tokens={self.prompt_tokens})>"

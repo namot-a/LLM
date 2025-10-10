@@ -159,8 +159,11 @@ export default async function Home() {
                   <div className="card-title">{log.question}</div>
                   <div className="card-meta">
                     {new Date(log.ts).toLocaleString('ru-RU')}
-                    {log.telegram_user_id && (
-                      <> • ID пользователя: {log.telegram_user_id}</>
+                    {log.username && (
+                      <> • Пользователь: {log.username}</>
+                    )}
+                    {!log.username && log.telegram_user_id && (
+                      <> • ID: {log.telegram_user_id}</>
                     )}
                     {log.model && <> • Модель: {log.model}</>}
                   </div>
@@ -212,8 +215,9 @@ export default async function Home() {
                       {fb.rating === "good" ? "👍 Хорошо" : "👎 Плохо"}
                     </span>
                     <span className="card-meta">
-                      {new Date(fb.ts).toLocaleString('ru-RU')} • ID пользователя:{" "}
-                      {fb.telegram_user_id}
+                      {new Date(fb.ts).toLocaleString('ru-RU')}
+                      {fb.username && <> • {fb.username}</>}
+                      {!fb.username && <> • ID: {fb.telegram_user_id}</>}
                     </span>
                   </div>
                   {fb.comment && (

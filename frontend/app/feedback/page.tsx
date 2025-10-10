@@ -115,14 +115,25 @@ export default async function FeedbackPage() {
                     <strong>ID:</strong> {fb.id}
                   </span>
                 </div>
+                
+                {/* Вопрос пользователя */}
+                {fb.question && (
+                  <div className="card-content" style={{ background: "#f8f9fa", padding: "12px", borderRadius: "6px", marginBottom: "10px" }}>
+                    <strong>Вопрос:</strong> {fb.question}
+                  </div>
+                )}
+                
                 <div className="card-meta">
                   <strong>Время:</strong> {new Date(fb.ts).toLocaleString('ru-RU')}
                   <br />
-                  <strong>ID пользователя:</strong> {fb.telegram_user_id}
-                  <br />
-                  {fb.message_id && (
+                  {fb.username ? (
                     <>
-                      <strong>ID сообщения:</strong> {fb.message_id}
+                      <strong>Пользователь:</strong> {fb.username}
+                      <br />
+                    </>
+                  ) : (
+                    <>
+                      <strong>ID пользователя:</strong> {fb.telegram_user_id}
                       <br />
                     </>
                   )}

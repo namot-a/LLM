@@ -34,6 +34,7 @@ export default async function QueryLogsPage() {
     (sum, log) => sum + Number(log.cost_usd || 0),
     0
   );
+  const failedQueries = queryLogs.filter(log => !log.has_answer).length;
 
   return (
     <div>
@@ -75,6 +76,10 @@ export default async function QueryLogsPage() {
             <div className="stat-label">Всего запросов</div>
           </div>
           <div className="stat-card">
+            <div className="stat-value">{failedQueries}</div>
+            <div className="stat-label">Без ответа</div>
+          </div>
+          <div className="stat-card">
             <div className="stat-value">{totalTokens.toLocaleString('ru-RU')}</div>
             <div className="stat-label">Всего токенов</div>
           </div>
@@ -93,18 +98,30 @@ export default async function QueryLogsPage() {
           <div>
             {queryLogs.map((log) => (
               <div key={log.id} className="card">
-                <div className="card-title">{log.question}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                  <div className="card-title" style={{ marginBottom: 0 }}>{log.question}</div>
+                  {!log.has_answer && (
+                    <span className="badge badge-danger" style={{ fontSize: "12px" }}>
+                      Без ответа
+                    </span>
+                  )}
+                </div>
                 <div className="card-meta">
                   <strong>ID:</strong> {log.id}
                   <br />
                   <strong>Время:</strong> {new Date(log.ts).toLocaleString('ru-RU')}
                   <br />
-                  {log.telegram_user_id && (
+                  {log.username ? (
+                    <>
+                      <strong>Пользователь:</strong> {log.username}
+                      <br />
+                    </>
+                  ) : log.telegram_user_id ? (
                     <>
                       <strong>ID пользователя:</strong> {log.telegram_user_id}
                       <br />
                     </>
-                  )}
+                  ) : null}
                   {log.model && (
                     <>
                       <strong>Модель:</strong> {log.model}

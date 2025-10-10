@@ -19,3 +19,9 @@ UPDATE notion_pages SET allowed_roles = ARRAY['Recruiter', 'Team Lead', 'Head'] 
 -- Update existing documents to have default roles if NULL
 UPDATE documents SET allowed_roles = ARRAY['Recruiter', 'Team Lead', 'Head'] WHERE allowed_roles IS NULL;
 
+-- Add has_answer column to query_logs for tracking failed queries
+ALTER TABLE query_logs ADD COLUMN IF NOT EXISTS has_answer BOOLEAN DEFAULT TRUE;
+
+-- Create index for filtering
+CREATE INDEX IF NOT EXISTS idx_query_logs_has_answer ON query_logs(has_answer);
+

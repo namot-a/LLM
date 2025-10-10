@@ -156,10 +156,23 @@ async def query_endpoint(request: QueryRequest, db: AsyncSession = Depends(get_d
             else:
                 answer = "Я не нашла релевантной информации в регламентах. Попробуйте переформулировать вопрос или обратитесь к администратору."
             
+            # Log failed query
+            processing_time = int((time.time() - start_time) * 1000)
+            query_log = QueryLog(
+                ts=datetime.utcnow(),
+                telegram_user_id=request.telegram_user_id,
+                question=request.question,
+                answer=answer,
+                has_answer=False,  # Mark as failed
+                processing_time_ms=processing_time
+            )
+            db.add(query_log)
+            await db.commit()
+            
             return QueryResponse(
                 answer=answer,
                 sources=[] if request.include_sources else None,
-                processing_time_ms=int((time.time() - start_time) * 1000)
+                processing_time_ms=processing_time
             )
         
         # Generate answer using LLM
@@ -187,9 +200,11 @@ async def query_endpoint(request: QueryRequest, db: AsyncSession = Depends(get_d
             completion_tokens=llm_response.get("completion_tokens"),
             model=llm_response.get("model"),
             cost_usd=cost,
-            processing_time_ms=processing_time
+            processing_time_ms=processing_time,
+            has_answer=True
         )
         db.add(query_log)
+        await db.commit()
         
         logger.info("Query processed successfully", 
                    user_id=request.telegram_user_id,

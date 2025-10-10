@@ -24,6 +24,7 @@ export interface QueryLog {
   id: number;
   ts: string;
   telegram_user_id: number | null;
+  username: string | null;
   question: string;
   answer: string;
   prompt_tokens: number | null;
@@ -31,14 +32,17 @@ export interface QueryLog {
   model: string | null;
   cost_usd: number | null;
   processing_time_ms: number | null;
+  has_answer: boolean;
 }
 
 export interface Feedback {
   id: number;
   ts: string;
   telegram_user_id: number;
+  username: string | null;
   message_id: number | null;
   query_log_id: number | null;
+  question: string | null;
   rating: string;
   comment: string | null;
 }

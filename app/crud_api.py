@@ -297,21 +297,45 @@ async def update_chunk(
 
 # Query logs endpoints
 @router.get("/query-logs")
-async def get_query_logs(limit: Optional[int] = None, db: AsyncSession = Depends(get_db)):
-    """Get all query logs."""
+async def get_query_logs(
+    limit: Optional[int] = None, 
+    failed_only: Optional[bool] = None,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all query logs with user info."""
     try:
+        from sqlalchemy.orm import selectinload
+        
+        # Build query
         query = select(QueryLog).order_by(QueryLog.ts.desc())
+        
+        # Filter by failed queries if requested
+        if failed_only is not None:
+            query = query.where(QueryLog.has_answer == (not failed_only))
+        
         if limit:
             query = query.limit(limit)
         
         result = await db.execute(query)
         logs = result.scalars().all()
         
-        return [
-            {
+        # Get usernames
+        response = []
+        for log in logs:
+            username = None
+            if log.telegram_user_id:
+                user_result = await db.execute(
+                    select(TelegramUser).where(TelegramUser.user_id == log.telegram_user_id)
+                )
+                user = user_result.scalar_one_or_none()
+                if user:
+                    username = user.username
+            
+            response.append({
                 "id": log.id,
                 "ts": log.ts.isoformat(),
                 "telegram_user_id": log.telegram_user_id,
+                "username": username,
                 "question": log.question,
                 "answer": log.answer,
                 "prompt_tokens": log.prompt_tokens,
@@ -319,9 +343,10 @@ async def get_query_logs(limit: Optional[int] = None, db: AsyncSession = Depends
                 "model": log.model,
                 "cost_usd": str(log.cost_usd) if log.cost_usd else None,
                 "processing_time_ms": log.processing_time_ms,
-            }
-            for log in logs
-        ]
+                "has_answer": log.has_answer,
+            })
+        
+        return response
     except Exception as e:
         logger.error("Error fetching query logs", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to fetch query logs")
@@ -329,7 +354,7 @@ async def get_query_logs(limit: Optional[int] = None, db: AsyncSession = Depends
 
 @router.get("/query-logs/{log_id}")
 async def get_query_log(log_id: int, db: AsyncSession = Depends(get_db)):
-    """Get query log by ID."""
+    """Get query log by ID with user info."""
     try:
         result = await db.execute(select(QueryLog).where(QueryLog.id == log_id))
         log = result.scalar_one_or_none()
@@ -337,10 +362,21 @@ async def get_query_log(log_id: int, db: AsyncSession = Depends(get_db)):
         if not log:
             raise HTTPException(status_code=404, detail="Query log not found")
         
+        # Get username
+        username = None
+        if log.telegram_user_id:
+            user_result = await db.execute(
+                select(TelegramUser).where(TelegramUser.user_id == log.telegram_user_id)
+            )
+            user = user_result.scalar_one_or_none()
+            if user:
+                username = user.username
+        
         return {
             "id": log.id,
             "ts": log.ts.isoformat(),
             "telegram_user_id": log.telegram_user_id,
+            "username": username,
             "question": log.question,
             "answer": log.answer,
             "prompt_tokens": log.prompt_tokens,
@@ -348,6 +384,7 @@ async def get_query_log(log_id: int, db: AsyncSession = Depends(get_db)):
             "model": log.model,
             "cost_usd": str(log.cost_usd) if log.cost_usd else None,
             "processing_time_ms": log.processing_time_ms,
+            "has_answer": log.has_answer,
         }
     except HTTPException:
         raise
@@ -380,7 +417,7 @@ async def delete_query_log(log_id: int, db: AsyncSession = Depends(get_db)):
 # Feedback endpoints
 @router.get("/feedback")
 async def get_feedback(limit: Optional[int] = None, db: AsyncSession = Depends(get_db)):
-    """Get all feedback."""
+    """Get all feedback with user info and question."""
     try:
         query = select(Feedback).order_by(Feedback.ts.desc())
         if limit:
@@ -389,18 +426,41 @@ async def get_feedback(limit: Optional[int] = None, db: AsyncSession = Depends(g
         result = await db.execute(query)
         feedback_list = result.scalars().all()
         
-        return [
-            {
+        response = []
+        for fb in feedback_list:
+            # Get username
+            username = None
+            if fb.telegram_user_id:
+                user_result = await db.execute(
+                    select(TelegramUser).where(TelegramUser.user_id == fb.telegram_user_id)
+                )
+                user = user_result.scalar_one_or_none()
+                if user:
+                    username = user.username
+            
+            # Get question from query_log
+            question = None
+            if fb.query_log_id:
+                log_result = await db.execute(
+                    select(QueryLog).where(QueryLog.id == fb.query_log_id)
+                )
+                log = log_result.scalar_one_or_none()
+                if log:
+                    question = log.question
+            
+            response.append({
                 "id": fb.id,
                 "ts": fb.ts.isoformat(),
                 "telegram_user_id": fb.telegram_user_id,
+                "username": username,
                 "message_id": fb.message_id,
                 "query_log_id": fb.query_log_id,
+                "question": question,
                 "rating": fb.rating,
                 "comment": fb.comment,
-            }
-            for fb in feedback_list
-        ]
+            })
+        
+        return response
     except Exception as e:
         logger.error("Error fetching feedback", error=str(e))
         raise HTTPException(status_code=500, detail="Failed to fetch feedback")
@@ -408,7 +468,7 @@ async def get_feedback(limit: Optional[int] = None, db: AsyncSession = Depends(g
 
 @router.get("/feedback/{feedback_id}")
 async def get_feedback_by_id(feedback_id: int, db: AsyncSession = Depends(get_db)):
-    """Get feedback by ID."""
+    """Get feedback by ID with user info and question."""
     try:
         result = await db.execute(select(Feedback).where(Feedback.id == feedback_id))
         fb = result.scalar_one_or_none()
@@ -416,12 +476,34 @@ async def get_feedback_by_id(feedback_id: int, db: AsyncSession = Depends(get_db
         if not fb:
             raise HTTPException(status_code=404, detail="Feedback not found")
         
+        # Get username
+        username = None
+        if fb.telegram_user_id:
+            user_result = await db.execute(
+                select(TelegramUser).where(TelegramUser.user_id == fb.telegram_user_id)
+            )
+            user = user_result.scalar_one_or_none()
+            if user:
+                username = user.username
+        
+        # Get question from query_log
+        question = None
+        if fb.query_log_id:
+            log_result = await db.execute(
+                select(QueryLog).where(QueryLog.id == fb.query_log_id)
+            )
+            log = log_result.scalar_one_or_none()
+            if log:
+                question = log.question
+        
         return {
             "id": fb.id,
             "ts": fb.ts.isoformat(),
             "telegram_user_id": fb.telegram_user_id,
+            "username": username,
             "message_id": fb.message_id,
             "query_log_id": fb.query_log_id,
+            "question": question,
             "rating": fb.rating,
             "comment": fb.comment,
         }
