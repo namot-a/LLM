@@ -16,7 +16,7 @@ from .llm import answer_with_context, calculate_cost
 from .models import QueryLog, Feedback, TelegramUser
 
 # Admin DB utilities
-from sqlalchemy import text  # added for raw SQL execution
+from sqlalchemy import text, select  # added for raw SQL execution and queries
 from .db import engine  # use engine for DDL
 from .models import Base  # use metadata for table creation
 
@@ -136,7 +136,6 @@ async def query_endpoint(request: QueryRequest, db: AsyncSession = Depends(get_d
         # Get user role from database for role-based filtering
         user_role = None
         if request.telegram_user_id:
-            from sqlalchemy import select
             result = await db.execute(
                 select(TelegramUser).where(TelegramUser.user_id == request.telegram_user_id)
             )
