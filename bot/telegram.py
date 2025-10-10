@@ -216,20 +216,29 @@ async def handle_message(message: types.Message):
         try:
             response_text = await format_response(data)
             
-            # Send response with feedback keyboard
-            await message.reply(
-                response_text,
-                parse_mode="Markdown",
-                disable_web_page_preview=True,
-                reply_markup=create_feedback_keyboard(message.message_id)
-            )
+            # Check if response is an error message (starts with ❌)
+            # Don't use Markdown for error messages
+            if response_text.startswith("❌"):
+                await message.reply(
+                    response_text,
+                    disable_web_page_preview=True
+                )
+            else:
+                # Send response with feedback keyboard and Markdown
+                await message.reply(
+                    response_text,
+                    parse_mode="Markdown",
+                    disable_web_page_preview=True,
+                    reply_markup=create_feedback_keyboard(message.message_id)
+                )
             
             logger.info("Response sent", user_id=user_id, response_length=len(response_text))
             
         except TelegramBadRequest as e:
             logger.error("Telegram bad request", error=str(e), user_id=user_id)
             try:
-                await message.reply("❌ Ошибка отправки сообщения. Попробуйте еще раз.")
+                # Send without Markdown to avoid parsing errors
+                await message.reply("Ошибка отправки сообщения. Попробуйте переформулировать вопрос.")
             except Exception:
                 pass
         except Exception as e:
