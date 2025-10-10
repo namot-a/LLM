@@ -20,6 +20,7 @@ notion = AsyncClient(auth=settings.notion_token)
 
 class NotionPageCreate(BaseModel):
     page_url: str
+    allowed_roles: list[str] = ["Recruiter", "Team Lead", "Head"]
 
 
 def extract_page_id_from_url(url: str) -> str:
@@ -65,6 +66,7 @@ async def get_notion_pages(db: AsyncSession = Depends(get_db)):
                 "page_url": page.page_url,
                 "page_id": page.page_id,
                 "title": page.title,
+                "allowed_roles": page.allowed_roles or [],
                 "status": page.status,
                 "last_synced": page.last_synced.isoformat() if page.last_synced else None,
                 "error_message": page.error_message,
@@ -110,19 +112,21 @@ async def create_notion_page(data: NotionPageCreate, db: AsyncSession = Depends(
             page_url=data.page_url,
             page_id=page_id,
             title=title or "Untitled",
+            allowed_roles=data.allowed_roles,
             status="pending",
         )
         db.add(page)
         await db.commit()
         await db.refresh(page)
         
-        logger.info("Notion page created", page_id=page_id, title=title)
+        logger.info("Notion page created", page_id=page_id, title=title, roles=data.allowed_roles)
         
         return {
             "id": page.id,
             "page_url": page.page_url,
             "page_id": page.page_id,
             "title": page.title,
+            "allowed_roles": page.allowed_roles,
             "status": page.status,
             "last_synced": None,
             "error_message": None,
@@ -165,8 +169,8 @@ async def sync_notion_page(page_id: int, db: AsyncSession = Depends(get_db)):
                 if new_title:
                     page.title = new_title
             
-            # Sync page content
-            await upsert_page(db, page.page_id, last_edited)
+            # Sync page content with allowed roles
+            await upsert_page(db, page.page_id, last_edited, allowed_roles=page.allowed_roles)
             
             # Update status to synced
             page.status = "synced"
@@ -181,6 +185,7 @@ async def sync_notion_page(page_id: int, db: AsyncSession = Depends(get_db)):
                 "page_url": page.page_url,
                 "page_id": page.page_id,
                 "title": page.title,
+                "allowed_roles": page.allowed_roles,
                 "status": page.status,
                 "last_synced": page.last_synced.isoformat() if page.last_synced else None,
                 "error_message": page.error_message,

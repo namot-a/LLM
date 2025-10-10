@@ -56,6 +56,7 @@ export interface NotionPage {
   page_url: string;
   page_id: string;
   title: string;
+  allowed_roles: string[];
   status: string;
   last_synced: string | null;
   error_message: string | null;

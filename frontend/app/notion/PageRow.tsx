@@ -73,6 +73,21 @@ export default function PageRow({ page }: { page: NotionPage }) {
     <tr>
       <td>
         <div>{page.title}</div>
+        <div style={{ marginTop: "5px", display: "flex", gap: "5px", flexWrap: "wrap" }}>
+          {page.allowed_roles && page.allowed_roles.map(role => (
+            <span 
+              key={role} 
+              className={
+                role === "Head" ? "badge badge-danger" : 
+                role === "Team Lead" ? "badge badge-info" : 
+                "badge badge-success"
+              }
+              style={{ fontSize: "11px" }}
+            >
+              {role}
+            </span>
+          ))}
+        </div>
         {page.error_message && (
           <div style={{ fontSize: "12px", color: "#c33", marginTop: "5px" }}>
             {page.error_message}

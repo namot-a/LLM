@@ -103,7 +103,7 @@ export default async function NotionPagesPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Название</th>
+                  <th>Название и доступные роли</th>
                   <th>Статус</th>
                   <th>Последняя синхронизация</th>
                   <th>Дата добавления</th>

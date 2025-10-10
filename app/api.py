@@ -13,7 +13,7 @@ from .exceptions import NotionRAGError, NotionAPIError, OpenAIError, RetrievalEr
 from .notion_sync import ingest_all
 from .retrieval import retrieve, format_sources
 from .llm import answer_with_context, calculate_cost
-from .models import QueryLog, Feedback
+from .models import QueryLog, Feedback, TelegramUser
 
 # Admin DB utilities
 from sqlalchemy import text  # added for raw SQL execution
@@ -133,14 +133,31 @@ async def query_endpoint(request: QueryRequest, db: AsyncSession = Depends(get_d
                    question=request.question[:100], 
                    user_id=request.telegram_user_id)
         
-        # Get database session
-        # Retrieve relevant chunks
-        chunks = await retrieve(db, request.question)
+        # Get user role from database for role-based filtering
+        user_role = None
+        if request.telegram_user_id:
+            from sqlalchemy import select
+            result = await db.execute(
+                select(TelegramUser).where(TelegramUser.user_id == request.telegram_user_id)
+            )
+            user = result.scalar_one_or_none()
+            if user:
+                user_role = user.role
+                logger.info("User role retrieved", user_id=request.telegram_user_id, role=user_role)
+        
+        # Retrieve relevant chunks with role filtering
+        chunks = await retrieve(db, request.question, user_role=user_role)
         
         if not chunks:
-            logger.warning("No relevant chunks found", question=request.question[:100])
+            logger.warning("No relevant chunks found", question=request.question[:100], user_role=user_role)
+            # Check if it's because of role restrictions
+            if user_role and user_role != "Head":
+                answer = "❌ Эта информация недоступна вашей роли. Обратитесь к руководителю или администратору."
+            else:
+                answer = "Я не нашла релевантной информации в регламентах. Попробуйте переформулировать вопрос или обратитесь к администратору."
+            
             return QueryResponse(
-                answer="Я не нашла релевантной информации в регламентах. Попробуйте переформулировать вопрос или обратитесь к администратору.",
+                answer=answer,
                 sources=[] if request.include_sources else None,
                 processing_time_ms=int((time.time() - start_time) * 1000)
             )

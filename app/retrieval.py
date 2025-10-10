@@ -11,13 +11,14 @@ from .embeddings import embed_query
 logger = get_logger(__name__)
 
 
-async def retrieve(db: AsyncSession, question: str) -> List[Dict]:
+async def retrieve(db: AsyncSession, question: str, user_role: Optional[str] = None) -> List[Dict]:
     """
-    Retrieve relevant document chunks using vector similarity search.
+    Retrieve relevant document chunks using vector similarity search with role-based filtering.
     
     Args:
         db: Database session
         question: User question
+        user_role: User's role for access control (Recruiter, Team Lead, Head)
         
     Returns:
         List of relevant chunks with metadata
@@ -26,23 +27,32 @@ async def retrieve(db: AsyncSession, question: str) -> List[Dict]:
         RetrievalError: If retrieval fails
     """
     try:
-        logger.info("Starting retrieval", question=question[:100])
+        logger.info("Starting retrieval", question=question[:100], user_role=user_role)
         
         # Create query embedding
         query_embedding = await embed_query(question)
         
+        # Build WHERE clause for role-based filtering
+        role_filter = ""
+        if user_role and user_role != "Head":
+            # Head has access to everything, others only to their allowed chunks
+            # Check if user_role is in allowed_roles array OR allowed_roles is NULL (legacy chunks)
+            role_filter = "WHERE (c.allowed_roles IS NULL OR :user_role = ANY(c.allowed_roles))"
+        
         # Vector similarity search using pgvector
-        sql = text("""
+        sql = text(f"""
             SELECT 
                 c.id,
                 c.content,
                 c.heading_path,
+                c.allowed_roles,
                 d.title,
                 d.url,
                 d.last_edited,
                 1 - (c.embedding <=> :query_embedding)::float as cosine_similarity
             FROM chunks c
             JOIN documents d ON d.id = c.document_id
+            {role_filter}
             ORDER BY c.embedding <-> :query_embedding
             LIMIT :top_k
         """)
@@ -50,10 +60,15 @@ async def retrieve(db: AsyncSession, question: str) -> List[Dict]:
         # Convert embedding list to string format for pgvector
         embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
         
-        result = await db.execute(sql, {
+        params = {
             "query_embedding": embedding_str,
             "top_k": settings.top_k
-        })
+        }
+        
+        if user_role and user_role != "Head":
+            params["user_role"] = user_role
+        
+        result = await db.execute(sql, params)
         
         rows = result.mappings().all()
         chunks = [dict(row) for row in rows]

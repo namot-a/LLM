@@ -164,10 +164,10 @@ def chunk_text(text: str, size: int = 1000, overlap: int = 200) -> List[str]:
     return chunks
 
 
-async def upsert_page(db: AsyncSession, page_id: str, last_edited: datetime) -> None:
+async def upsert_page(db: AsyncSession, page_id: str, last_edited: datetime, allowed_roles: Optional[List[str]] = None) -> None:
     """Update or create a document and its chunks."""
     try:
-        logger.info("Upserting page", page_id=page_id)
+        logger.info("Upserting page", page_id=page_id, allowed_roles=allowed_roles)
         
         # Check if document exists
         result = await db.execute(select(Document).where(Document.notion_page_id == page_id))
@@ -211,7 +211,8 @@ async def upsert_page(db: AsyncSession, page_id: str, last_edited: datetime) -> 
                     chunk_index=idx,
                     heading_path=path,
                     content=content,
-                    embedding=embedding
+                    embedding=embedding,
+                    allowed_roles=allowed_roles  # Set roles for chunk
                 )
                 db.add(chunk)
             
