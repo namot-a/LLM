@@ -88,7 +88,7 @@ class Feedback(Base):
     ts = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True)
     telegram_user_id = Column(BigInteger, nullable=False, index=True)
     message_id = Column(BigInteger, nullable=True)
-    query_log_id = Column(BigInteger, ForeignKey("query_logs.id"), nullable=True)
+    query_log_id = Column(BigInteger, ForeignKey("query_logs.id", ondelete="SET NULL"), nullable=True)
     rating = Column(String, nullable=False)  # 'good' or 'bad'
     comment = Column(Text, nullable=True)
     

@@ -216,29 +216,30 @@ async def handle_message(message: types.Message):
         try:
             response_text = await format_response(data)
             
-            # Check if response is an error message (starts with ❌)
-            # Don't use Markdown for error messages
-            if response_text.startswith("❌"):
-                await message.reply(
-                    response_text,
-                    disable_web_page_preview=True
-                )
-            else:
-                # Send response with feedback keyboard and Markdown
+            # Try to send with Markdown first
+            try:
                 await message.reply(
                     response_text,
                     parse_mode="Markdown",
                     disable_web_page_preview=True,
                     reply_markup=create_feedback_keyboard(message.message_id)
                 )
-            
-            logger.info("Response sent", user_id=user_id, response_length=len(response_text))
+                logger.info("Response sent with Markdown", user_id=user_id, response_length=len(response_text))
+            except TelegramBadRequest as markdown_error:
+                # If Markdown fails, try without it
+                logger.warning("Markdown parse failed, sending as plain text", error=str(markdown_error))
+                await message.reply(
+                    response_text,
+                    disable_web_page_preview=True,
+                    reply_markup=create_feedback_keyboard(message.message_id)
+                )
+                logger.info("Response sent as plain text", user_id=user_id)
             
         except TelegramBadRequest as e:
             logger.error("Telegram bad request", error=str(e), user_id=user_id)
             try:
-                # Send without Markdown to avoid parsing errors
-                await message.reply("Ошибка отправки сообщения. Попробуйте переформулировать вопрос.")
+                # Last resort - send simple error message
+                await message.reply("Получен ответ, но не удалось отправить. Попробуйте переформулировать вопрос.")
             except Exception:
                 pass
         except Exception as e:
